@@ -105,8 +105,7 @@ struct MissionView: View {
                 
                 // MARK: - Start Mission Button
                 NavigationLink {
-                    Text("صفحة اختيار الأكلة")
-                        .font(.largeTitle)
+                    FoodSelectionPage(character: character)
                 } label: {
                     HStack(spacing: 10) {
                         

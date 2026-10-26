@@ -23,7 +23,7 @@ struct RiceMealView: View {
 
    // The 4 buttons, left → right like the design
    let foods = [
-       Food(id: "chicken", arabicName: "دجاج",  icon: "chicken",
+       Food(id: "chicken", arabicName: "دجاج",  icon: "riceChickenIngredient",
             voice: "الدجاج مليء بالبروتين، يجعل عضلاتك قوية!"),
        Food(id: "yogurt",  arabicName: "زبادي", icon: "yogurt",
             voice: "الزبادي مفيد لعظامك وأسنانك!"),
