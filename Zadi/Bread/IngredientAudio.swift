@@ -26,13 +26,13 @@ final class IngredientAudio {
               )
         else { return }
 
-        // The new playback request stops the previous player itself.
+        // Cancel the queued stop; the new playback request stops the previous player itself.
         playbackTask?.cancel()
         playbackTask = Task { [playback] in
             do {
                 try await playback.play(url: url)
             } catch is CancellationError {
-                // A stop or a newer recording superseded this request.
+                // Stopping or choosing another ingredient cancels this request; this is expected.
             } catch {
                 print("Audio error: \(error.localizedDescription)")
             }
@@ -42,6 +42,7 @@ final class IngredientAudio {
     // MARK: Stop Recording
 
     func stop() {
+        // Cancel any pending playback before asking the player to stop.
         playbackTask?.cancel()
         playbackTask = Task { [playback] in
             await playback.stop()
@@ -59,6 +60,7 @@ private actor IngredientAudioPlayback {
         player = nil
 
         guard try await AVAudioSession.sharedInstance().activate() else { return }
+        // The selection may have changed while audio activation was waiting.
         try Task.checkCancellation()
 
         player = try AVAudioPlayer(contentsOf: url)
@@ -66,7 +68,7 @@ private actor IngredientAudioPlayback {
     }
 
     func stop() {
-        // Ignore a queued stop that has been superseded by a newer request.
+        // A cancelled stop should not interrupt the newer recording.
         guard !Task.isCancelled else { return }
         player?.stop()
         player = nil
