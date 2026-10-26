@@ -132,7 +132,7 @@ struct MissionView: View {
 
                 // MARK: - Start Mission Button
                 NavigationLink {
-                    MealSelectionView(character: character)
+                    FoodSelectionPage(character: character)
                 } label: {
                     HStack(spacing: 10) {
 
