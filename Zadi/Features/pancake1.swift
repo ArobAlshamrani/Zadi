@@ -59,7 +59,7 @@ struct PancakePlateView: View {
 
                 // MARK: - Background
 
-                Image("plateBackground")
+                Image("KitchenBackGround")
                     .resizable()
                     .scaledToFill()
                     .frame(width: w, height: h)

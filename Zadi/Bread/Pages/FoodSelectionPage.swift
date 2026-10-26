@@ -6,6 +6,7 @@ struct FoodSelectionPage: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showsToast = false
     @State private var showsRice = false
+    @State private var showsPancake = false
 
     var body: some View {
         page
@@ -19,6 +20,21 @@ struct FoodSelectionPage: View {
     private var page: some View {
         if showsToast {
             ToastView(character: character, returnToFoodSelection: { showsToast = false })
+        } else if showsPancake {
+            PancakePlateView()
+                .overlay(alignment: .topLeading) {
+                    Button {
+                        showsPancake = false
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 22, weight: .bold))
+                            .frame(width: 52, height: 52)
+                            .background(.white.opacity(0.85), in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(24)
+                    .accessibilityLabel("الرجوع لاختيار الوجبة")
+                }
         } else if showsRice {
             GeometryReader { geometry in
                 let canvas = CGSize(width: 1366, height: 1100)
@@ -79,7 +95,7 @@ struct FoodSelectionPage: View {
                                     showsToast = true
                                 }
                                 MealSelectionButton(title: "بانكيك", image: "Pancake") {
-                                    // This meal will be connected when its screen is available.
+                                    showsPancake = true
                                 }
                                 MealSelectionButton(title: "وجبات خفيفة", image: "popcorn") {
                                     // This meal will be connected when its screen is available.
