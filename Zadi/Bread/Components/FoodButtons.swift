@@ -49,3 +49,21 @@ struct FoodChoiceButton: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
+
+// Shared by Bread's Next and Finish controls.
+struct BreadActionButton: View {
+    let title: LocalizedStringKey
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 19, weight: .bold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 34)
+                .padding(.vertical, 12)
+                .background(Color(red: 0.05, green: 0.78, blue: 0.28), in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}

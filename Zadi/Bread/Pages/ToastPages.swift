@@ -1,92 +1,48 @@
 import SwiftUI
 
-// MARK: - Spread Selection
-// Pages receive selections and action closures from ToastView, which owns the recipe.
-struct BaseSelectionPage: View {
-    let buttonWidth: CGFloat
-    let selectedBase: ToastBase?
-    let chooseBase: (ToastBase) -> Void
-    let next: () -> Void
+// MARK: - Shared Ingredient Controls
+struct IngredientChoiceRow<Ingredient: BreadIngredient>: View {
+    let ingredients: [Ingredient]
+    let isSelected: (Ingredient) -> Bool
+    let choose: (Ingredient) -> Void
 
-    // MARK: - UI
     var body: some View {
-        VStack(spacing: 16) {
-           /* Text("ماذا تريد أن تضيف إلى شطيرتك؟")
-                .font(.system(size: 23, weight: .bold))
-                .foregroundStyle(.black)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)*/
-
-            HStack(spacing: 18) {
-                ForEach(ToastBase.allCases) { food in
-                    FoodChoiceButton(title: food.title, image: food.icon,
-                                     selected: selectedBase == food) {
-                        chooseBase(food)
-                    }
+        HStack(spacing: 18) {
+            ForEach(ingredients) { food in
+                FoodChoiceButton(title: food.title, image: food.icon,
+                                 selected: isSelected(food)) {
+                    choose(food)
                 }
             }
-
-            Button(action: next) {
-                Text("التالي")
-                    .font(.system(size: 19, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 34)
-                    .padding(.vertical, 12)
-                    .background(Color(red: 0.05, green: 0.78, blue: 0.28), in: Capsule())
-            }
-            .buttonStyle(.plain)
         }
     }
 }
 
-// MARK: - Spread Preview
-// Empty closures let previews show sample selections without changing a real recipe.
+// Spread and protein steps share their layout; ToastView owns their selections.
+struct IngredientSelectionPage<Ingredient: BreadIngredient>: View {
+    let ingredients: [Ingredient]
+    let selected: Ingredient?
+    let choose: (Ingredient) -> Void
+    let next: () -> Void
+
+    var body: some View {
+        VStack(spacing: 16) {
+            IngredientChoiceRow(ingredients: ingredients,
+                                isSelected: { selected == $0 }, choose: choose)
+            BreadActionButton(title: "التالي", action: next)
+        }
+    }
+}
+
 #Preview("1 — Spread selection") {
-    BaseSelectionPage(buttonWidth: 105, selectedBase: .cheese, chooseBase: { _ in }, next: {})
+    IngredientSelectionPage(ingredients: ToastBase.allCases,
+                            selected: .cheese, choose: { _ in }, next: {})
         .environment(\.layoutDirection, .rightToLeft)
 }
 
-// MARK: - Protein Selection
-struct ProteinSelectionPage: View {
-    let buttonWidth: CGFloat
-    let selectedProtein: ToastProtein?
-    let chooseProtein: (ToastProtein) -> Void
-    let next: () -> Void
-
-    // MARK: - UI
-    var body: some View {
-        VStack(spacing: 16) {
-          /*  Text("اختر ما تريد إضافته")
-                .font(.system(size: 23, weight: .bold))
-                .foregroundStyle(.black)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)*/
-
-            HStack(spacing: 18) {
-                ForEach(ToastProtein.allCases) { food in
-                    FoodChoiceButton(title: food.title, image: food.icon,
-                                     selected: selectedProtein == food) {
-                        chooseProtein(food)
-                    }
-                }
-            }
-
-            Button(action: next) {
-                Text("التالي")
-                    .font(.system(size: 19, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 34)
-                    .padding(.vertical, 12)
-                    .background(Color(red: 0.05, green: 0.78, blue: 0.28), in: Capsule())
-            }
-            .buttonStyle(.plain)
-        }
-    }
-}
-
-// MARK: - Protein Preview
 #Preview("2 — Protein selection") {
-    ProteinSelectionPage(buttonWidth: 105, selectedProtein: .egg, chooseProtein: { _ in }, next: {})
+    IngredientSelectionPage(ingredients: ToastProtein.allCases,
+                            selected: .egg, choose: { _ in }, next: {})
         .environment(\.layoutDirection, .rightToLeft)
 }
 
@@ -113,12 +69,6 @@ struct ToppingsSelectionPage: View {
     // MARK: - UI
     var body: some View {
         VStack(spacing: 16) {
-          /*  Text("أضف ما تحب إلى شطيرتك!")
-                .font(.system(size: 23, weight: .bold))
-                .foregroundStyle(.black)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 16)*/
-
             if selectedBase == nil && !hasProtein {
                 // $ creates a binding so the picker can both read and update showsFruits.
                 Picker("نوع الإضافات", selection: $showsFruits) {
@@ -129,34 +79,15 @@ struct ToppingsSelectionPage: View {
                 .frame(width: buttonWidth * 3 + 36)
             }
 
-            HStack(spacing: 18) {
-                if displaysFruits {
-                    ForEach(ToastFruit.allCases) { fruit in
-                        FoodChoiceButton(title: fruit.title, image: fruit.icon,
-                                         selected: selectedFruits.contains(fruit)) {
-                            toggleFruit(fruit)
-                        }
-                    }
-                } else {
-                    ForEach(ToastVegetable.allCases) { vegetable in
-                        FoodChoiceButton(title: vegetable.title, image: vegetable.icon,
-                                         selected: selectedVegetables.contains(vegetable)) {
-                            toggleVegetable(vegetable)
-                        }
-                    }
-                }
+            if displaysFruits {
+                IngredientChoiceRow(ingredients: ToastFruit.allCases,
+                                    isSelected: selectedFruits.contains, choose: toggleFruit)
+            } else {
+                IngredientChoiceRow(ingredients: ToastVegetable.allCases,
+                                    isSelected: selectedVegetables.contains, choose: toggleVegetable)
             }
 
-            Button(action: finish) {
-                Text("انتهيت!")
-                    .font(.system(size: 19, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 34)
-                    .padding(.vertical, 12)
-                    .background(Color(red: 0.05, green: 0.78, blue: 0.28))
-                    .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
+            BreadActionButton(title: "انتهيت!", action: finish)
             .disabled(!canFinish)
             .opacity(canFinish ? 1 : 0.5)
         }

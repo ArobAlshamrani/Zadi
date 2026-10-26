@@ -1,14 +1,22 @@
 import SwiftUI
 
 
+// Shared presentation requirements for Bread's ingredient choices.
+protocol BreadIngredient: RawRepresentable, Identifiable, Hashable where RawValue == String {
+    var title: String { get }
+    var benefit: IngredientBenefit { get }
+}
+
+extension BreadIngredient {
+    var id: String { rawValue }
+    var icon: String { rawValue }
+}
+
 // MARK: - Spreads
 // CaseIterable provides allCases for the pickers; Identifiable gives each choice a stable identity.
-enum ToastBase: String, CaseIterable, Identifiable {
+enum ToastBase: String, CaseIterable, BreadIngredient {
     case chocolate
     case cheese
-
-    // rawValue is the case name as a String, matching this ingredient's identity.
-    var id: String { rawValue }
 
     var title: String {
         switch self {
@@ -16,8 +24,6 @@ enum ToastBase: String, CaseIterable, Identifiable {
         case .cheese: return "جبن"
         }
     }
-
-    var icon: String { rawValue }
 
     var spreadScale: CGFloat { self == .chocolate ? 0.96 : 0.84 }
 
@@ -43,12 +49,10 @@ enum ToastBase: String, CaseIterable, Identifiable {
 }
 
 // MARK: - Proteins
-enum ToastProtein: String, CaseIterable, Identifiable {
+enum ToastProtein: String, CaseIterable, BreadIngredient {
     case egg
     case chicken = "Chicken"
     case turkey
-
-    var id: String { rawValue }
 
     var title: String {
         switch self {
@@ -58,18 +62,14 @@ enum ToastProtein: String, CaseIterable, Identifiable {
         }
     }
 
-    var icon: String { rawValue }
-
     var toppingImage: String { rawValue }
 }
 
 // MARK: - Vegetables
-enum ToastVegetable: String, CaseIterable, Identifiable {
+enum ToastVegetable: String, CaseIterable, BreadIngredient {
     case lettuce
     case tomato
     case cucumber
-
-    var id: String { rawValue }
 
     var title: String {
         switch self {
@@ -78,8 +78,6 @@ enum ToastVegetable: String, CaseIterable, Identifiable {
         case .cucumber: return "خيار"
         }
     }
-
-    var icon: String { rawValue }
 
     var toppingImage: String {
         switch self {
@@ -108,12 +106,10 @@ enum ToastVegetable: String, CaseIterable, Identifiable {
 }
 
 // MARK: - Fruits
-enum ToastFruit: String, CaseIterable, Identifiable {
+enum ToastFruit: String, CaseIterable, BreadIngredient {
     case banana
     case strawberry
     case apple
-
-    var id: String { rawValue }
 
     var title: String {
         switch self {
@@ -122,8 +118,6 @@ enum ToastFruit: String, CaseIterable, Identifiable {
         case .apple: return "تفاح"
         }
     }
-
-    var icon: String { rawValue }
 
     var scale: CGFloat {
         switch self {

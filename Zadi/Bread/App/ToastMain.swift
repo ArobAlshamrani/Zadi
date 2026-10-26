@@ -50,13 +50,13 @@ struct ToastView: View {
         } content: { buttonWidth in
             switch step {
             case .base:
-                BaseSelectionPage(buttonWidth: buttonWidth, selectedBase: selectedBase,
-                                  chooseBase: chooseBase, next: advance)
+                IngredientSelectionPage(ingredients: ToastBase.allCases, selected: selectedBase,
+                                        choose: chooseBase, next: advance)
             case .protein:
-                ProteinSelectionPage(
-                    buttonWidth: buttonWidth, selectedProtein: selectedProtein,
+                IngredientSelectionPage(
+                    ingredients: ToastProtein.allCases, selected: selectedProtein,
                     // This closure sends a tap back to the view that owns the recipe.
-                    chooseProtein: { protein in
+                    choose: { protein in
                         withAnimation {
                             selectedProtein = selectedProtein == protein ? nil : protein
                             // Protein starts the savory path, so earlier fruit choices no longer apply.
@@ -131,17 +131,7 @@ struct ToastView: View {
     }
 
     private func react(to benefit: IngredientBenefit, added: Bool) {
-        let reaction = Coach.react(to: benefit.coachFood, added: added, selected: selectedFoods)
-        // Ingredient taps are encouragement, never a declaration that the recipe is finished.
-        if added && benefit == .chocolate {
-            coachMessage = CoachMessage(mood: .thinking, text: "دعنا نفكر", voice: benefit.message)
-        } else if reaction?.mood == .eating {
-            coachMessage = added
-                ? CoachMessage(mood: .excited, text: "اجل هذا اختيار رائع!!", voice: benefit.message)
-                : nil
-        } else {
-            coachMessage = reaction
-        }
+        coachMessage = benefit.coachReaction(added: added, selected: selectedFoods)
         activeBenefit = added ? benefit : nil
     }
 

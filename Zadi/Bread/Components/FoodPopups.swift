@@ -1,8 +1,8 @@
 import SwiftUI
 
 // MARK: - Ingredient Messages
-// Keep the text and matching illustration together for each ingredient.
-enum IngredientBenefit: String, Identifiable {
+// Ingredient information used by the shared coach and Bread's prerecorded audio.
+enum IngredientBenefit: String {
     case chocolate
     case cheese
     case egg
@@ -14,25 +14,6 @@ enum IngredientBenefit: String, Identifiable {
     case banana
     case strawberry
     case apple
-    
-    var id: String { rawValue }
-    
-    var characterImage: String {
-        switch self {
-        case .chocolate: return "Girl thinking"
-        case .cheese: return "Girl Approval"
-        case .egg: return "Girl Celebrate"
-        case .chicken: return "Girl Approval"
-        case .turkey: return "Girl Wink"
-        case .lettuce: return "Girl Happy"
-        case .tomato: return "Girl Excited"
-        case .cucumber: return "Girl Happy"
-        case .banana: return "Girl Celebrate"
-        case .strawberry: return "Girl Excited"
-        case .apple: return "Girl Wink"
-        }
-    }
-    
     
     var message: String {
         switch self {
@@ -116,13 +97,30 @@ extension ToastVegetable {
 // Bread adapts its ingredients to the shared coach
 extension IngredientBenefit {
     var coachFood: Food {
-        let title = ToastBase(rawValue: rawValue)?.title
-            ?? ToastProtein(rawValue: rawValue)?.title
-            ?? ToastVegetable(rawValue: rawValue)?.title
-            ?? ToastFruit(rawValue: rawValue)?.title
+        // Match by benefit because artwork names can differ from ingredient IDs (e.g. "Chicken").
+        let title = ToastBase.allCases.first { $0.benefit == self }?.title
+            ?? ToastProtein.allCases.first { $0.benefit == self }?.title
+            ?? ToastVegetable.allCases.first { $0.benefit == self }?.title
+            ?? ToastFruit.allCases.first { $0.benefit == self }?.title
             ?? rawValue
         return Food(id: rawValue, arabicName: title, icon: rawValue,
                     isHealthy: self != .chocolate, voice: message)
+    }
+}
+
+extension IngredientBenefit {
+    func coachReaction(added: Bool, selected: [Food]) -> CoachMessage? {
+        let food = coachFood
+        let reaction = Coach.react(to: food, added: added, selected: selected)
+        if added && self == .chocolate {
+            return CoachMessage(mood: .thinking, text: "دعنا نفكر", voice: message)
+        }
+        // Ingredient taps must not declare the recipe complete. Ask the shared coach
+        // for its single-ingredient encouragement instead of copying that message.
+        if reaction?.mood == .eating {
+            return added ? Coach.react(to: food, added: true, selected: [food]) : nil
+        }
+        return reaction
     }
 }
 
@@ -193,87 +191,4 @@ private struct BreadSpeechTail: Shape {
     BreadCoachPopup(character: "boy", message: CoachMessage(
         mood: .excited, text: "اجل هذا اختيار رائع!!", voice: ""))
         .background(Color.gray.opacity(0.15))
-}
-
-// MARK: - Ingredient Popup
-// ToastView decides which message appears; this view only presents it.
-struct IngredientBenefitPopup: View {
-    let benefit: IngredientBenefit
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    // Grow the message font with the user's preferred text size.
-    @ScaledMetric(relativeTo: .title3) private var messageSize: CGFloat = 21
-
-    private let cream = Color(red: 1, green: 240.0 / 255, blue: 217.0 / 255)
-    private let ink = Color(red: 0.20, green: 0.28, blue: 0.55)
-
-    var body: some View {
-        // Keep the companion at the physical left edge; only the message uses Arabic reading direction.
-        GeometryReader { geometry in
-            let bubbleWidth = min(310, max(240, geometry.size.width * 0.26))
-            let girlHeight = min(325, geometry.size.height * 0.40)
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    VStack(spacing: 16) {
-                        Text(benefit.message)
-                            .font(.system(size: messageSize, weight: .semibold))
-                            .foregroundStyle(ink)
-                            .multilineTextAlignment(.center)
-                            .lineSpacing(4)
-                            .fixedSize(horizontal: false, vertical: true)
-
-                    }
-                    .padding(20)
-                    .frame(width: bubbleWidth)
-                    .background(cream, in: RoundedRectangle(cornerRadius: 26))
-                    .shadow(color: .black.opacity(0.10), radius: 6, y: 3)
-                    .environment(\.layoutDirection, .rightToLeft)
-                    .padding(.leading, 24)
-
-                    // Small circles make the message look like a thought bubble.
-                    VStack(spacing: 5) {
-                        Circle().frame(width: 16, height: 16)
-                            .offset(x: 10)
-                        Circle().frame(width: 10, height: 10)
-                    }
-                    .foregroundStyle(cream)
-                    .padding(.leading, girlHeight * 0.62)
-                    .padding(.vertical, 6)
-                    .accessibilityHidden(true)
-
-                    Image(benefit.characterImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: girlHeight, alignment: .bottom)
-                        // Hide the illustration's cut edge just below the screen.
-                        .offset(y: girlHeight * 0.07)
-                        .accessibilityHidden(true)
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 12)
-                .frame(minHeight: geometry.size.height, alignment: .bottomLeading)
-            }
-            .scrollIndicators(.hidden)
-            .clipped()
-            .frame(width: min(geometry.size.width, bubbleWidth + 48))
-        }
-        .ignoresSafeArea(edges: .bottom)
-        .environment(\.layoutDirection, .leftToRight)
-        .accessibilityElement(children: .contain)
-        // Use a fade instead of movement when Reduce Motion is enabled.
-        .transition(reduceMotion ? .opacity : .offset(y: 24).combined(with: .opacity))
-    }
-}
-
-// MARK: - Chocolate Popup
-struct ChocolatePopup: View {
-    var body: some View {
-        IngredientBenefitPopup(benefit: .chocolate)
-    }
-}
-
-
-// MARK: - Preview
-#Preview("Ingredient benefit", traits: .landscapeLeft) {
-    IngredientBenefitPopup(benefit: .strawberry)
 }
