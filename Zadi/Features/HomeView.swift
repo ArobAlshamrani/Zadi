@@ -93,27 +93,39 @@ struct HomeView: View {
                             y: height * 0.30
                         )
 
+                
                     // MARK: - Sound Button
                     Button {
                         playWelcomeVoice()
                     } label: {
                         Image(systemName: "speaker.wave.2.fill")
-                            .font(.system(size: 24))
-                            .foregroundStyle(.black.opacity(0.7))
-                            .padding(15)
+                            .font(.system(
+                                size: height * 0.035,
+                                weight: .bold
+                            ))
+                            .foregroundStyle(
+                                Color(red: 0.20, green: 0.30, blue: 0.45)
+                            )
+                            .frame(
+                                width: height * 0.10,
+                                height: height * 0.10
+                            )
                             .background(
-                                .white.opacity(0.5),
+                                Color.white.opacity(0.35),
                                 in: Circle()
                             )
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("استمع إلى الترحيب")
                     .position(
-                        x: width * 0.095,
+                        x: width * 0.93,
                         y: height * 0.10
                     )
+                    .zIndex(10)
 
                 
-                    Button {
-                        showCharacterSelection = true
+                    NavigationLink {
+                        CharacterSelectionView()
                     } label: {
                         Text("ابدأ المغامرة")
                             .font(.system(
