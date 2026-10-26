@@ -34,18 +34,21 @@ struct FoodCardLabel: View {
     }
 }
 
+// Shared by ingredient choices and the meal-selection cards.
+// Each screen supplies the action to run when its button is tapped.
 struct FoodChoiceButton: View {
-    let title: String
+    let title: Text
     let image: String
-    let selected: Bool
+    var selected = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            FoodCardLabel(title: Text(title), image: image, selected: selected)
+            FoodCardLabel(title: title, image: image, selected: selected)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(title)
+        // Let VoiceOver announce when this ingredient is selected.
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
@@ -65,5 +68,25 @@ struct BreadActionButton: View {
                 .background(Color(red: 0.05, green: 0.78, blue: 0.28), in: Capsule())
         }
         .buttonStyle(.plain)
+    }
+}
+
+// Same design as the back button in MissionView, so every screen shares one look.
+// Callers keep their own position, action and accessibility label.
+struct CircleBackButton: View {
+    let label: Text
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "chevron.left")
+                .font(.system(size: 22, weight: .bold))
+                .foregroundStyle(Color(red: 0.30, green: 0.40, blue: 0.55))
+                .frame(width: 52, height: 52)
+                .background(.white.opacity(0.85), in: Circle())
+                .shadow(color: .black.opacity(0.12), radius: 5, y: 3)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 }

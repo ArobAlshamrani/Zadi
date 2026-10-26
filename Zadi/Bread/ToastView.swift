@@ -1,29 +1,29 @@
 import SwiftUI
 
-// Owns the recipe so selections stay available when pages change.
+// Keep the selected ingredients here so they stay visible between steps.
 struct ToastView: View {
+    // FoodSelectionPage passes in the selected boy or girl.
     let character: String
     @State private var coachMessage: CoachMessage?
     var returnToFoodSelection: (() -> Void)? = nil
     // MARK: - State
-    // @State keeps values between view updates and refreshes the UI when they change.
-    // The ? makes a selection optional: nil means nothing is selected.
+    // Choose one spread and one protein; nil means that choice is empty.
     @State private var selectedBase: ToastBase?
     @State private var selectedProtein: ToastProtein?
     // Sets allow several toppings without storing duplicates.
     @State private var selectedVegetables: Set<ToastVegetable> = []
     @State private var selectedFruits: Set<ToastFruit> = []
     @State private var step: ToastStep = .base
-    // Adding an ingredient sets its message; deselecting one clears the popup.
+    // Track the ingredient recording separately from the character's message.
     @State private var activeBenefit: IngredientBenefit?
     // Keep one audio manager for this screen; create it only when needed.
     @State private var ingredientAudio: IngredientAudio?
     @Environment(\.scenePhase) private var scenePhase
-    // @Environment reads a system setting instead of storing our own copy.
+    // Use the device's Reduce Motion setting for the popup animation below.
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: - Computed Properties
-    // Computed properties derive values from current selections instead of storing extra state.
+    // Allow finishing once at least one ingredient has been added.
     private var canFinish: Bool {
         selectedBase != nil || selectedProtein != nil
             || !selectedFruits.isEmpty || !selectedVegetables.isEmpty
@@ -48,6 +48,7 @@ struct ToastView: View {
                          selectedVegetables: selectedVegetables,
                          selectedFruits: selectedFruits)
         } content: { buttonWidth in
+            // Swap the step controls while keeping the same recipe and toast preview.
             switch step {
             case .base:
                 IngredientSelectionPage(ingredients: ToastBase.allCases, selected: selectedBase,
@@ -99,17 +100,25 @@ struct ToastView: View {
                     .transition(.scale.combined(with: .opacity))
             }
         }
-        .overlay(alignment: .bottomLeading) {
+        // Reuse my teammate's CharacterView with the selected character and Bread's message.
+        // Keep the same character scaling and placement as the Pancake screen.
+        .overlay {
             if let coachMessage, step != .finished {
-                BreadCoachPopup(character: character, message: coachMessage)
-                    .allowsHitTesting(false)
-                    .zIndex(200)
+                GeometryReader { geometry in
+                    let scale = min(geometry.size.width / 1194, geometry.size.height / 834)
+                    CharacterView(character: character, message: coachMessage)
+                        .scaleEffect(scale)
+                        .position(x: geometry.size.width * 0.14, y: geometry.size.height * 0.87)
+                }
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
             }
         }
-        // React to selection changes, not every time SwiftUI redraws the popup.
+        // Play the recording when the ingredient changes, not when the view redraws.
         .onChange(of: activeBenefit) {
             playActiveRecording()
         }
+        // Stop the recording when the app becomes inactive or this screen closes.
         .onChange(of: scenePhase) {
             if scenePhase != .active {
                 ingredientAudio?.stop()
@@ -120,7 +129,7 @@ struct ToastView: View {
         }
     }
 
-    // Adapt Bread selections to the teammate's shared rules; audio stays in Bread.
+    // Convert the recipe into the Food values used by my teammate's coach rules.
     private var selectedFoods: [Food] {
         var benefits: [IngredientBenefit] = []
         if let selectedBase { benefits.append(selectedBase.benefit) }
@@ -130,6 +139,7 @@ struct ToastView: View {
         return benefits.map(\.coachFood)
     }
 
+    // Choose the message and expression, then update which recording should play.
     private func react(to benefit: IngredientBenefit, added: Bool) {
         coachMessage = benefit.coachReaction(added: added, selected: selectedFoods)
         activeBenefit = added ? benefit : nil
@@ -177,6 +187,7 @@ struct ToastView: View {
     }
 
     // MARK: - Navigation
+    // Move through spread, protein, and toppings; chocolate skips the protein step.
     private func advance() {
         ingredientAudio?.stop()
         withAnimation {
@@ -229,7 +240,7 @@ struct ToastView: View {
 
 // MARK: - Helpers
 private extension Set {
-    // mutating lets this helper change the set: tap once to add, again to remove.
+    // Tap once to add a topping, then tap it again to remove it.
     mutating func toggle(_ element: Element) {
         if contains(element) {
             remove(element)

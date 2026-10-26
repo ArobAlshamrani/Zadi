@@ -4,12 +4,13 @@ import SwiftUI
 struct IngredientChoiceRow<Ingredient: BreadIngredient>: View {
     let ingredients: [Ingredient]
     let isSelected: (Ingredient) -> Bool
+    // Send ingredient taps back to ToastView, where the recipe is stored.
     let choose: (Ingredient) -> Void
 
     var body: some View {
         HStack(spacing: 18) {
             ForEach(ingredients) { food in
-                FoodChoiceButton(title: food.title, image: food.icon,
+                FoodChoiceButton(title: Text(food.title), image: food.icon,
                                  selected: isSelected(food)) {
                     choose(food)
                 }
@@ -52,7 +53,7 @@ struct ToppingsSelectionPage: View {
     let canFinish: Bool
     let selectedBase: ToastBase?
     let hasProtein: Bool
-    // This local state remembers the category for plain toast; recipe selections live in ToastView.
+    // Remember the displayed category here; ToastView keeps the selected ingredients.
     @State private var showsFruits = true
     let selectedFruits: Set<ToastFruit>
     let selectedVegetables: Set<ToastVegetable>
@@ -70,7 +71,7 @@ struct ToppingsSelectionPage: View {
     var body: some View {
         VStack(spacing: 16) {
             if selectedBase == nil && !hasProtein {
-                // $ creates a binding so the picker can both read and update showsFruits.
+                // Without a spread or protein, let the child switch between fruit and vegetables.
                 Picker("نوع الإضافات", selection: $showsFruits) {
                     Text("فواكه").tag(true)
                     Text("خضروات").tag(false)

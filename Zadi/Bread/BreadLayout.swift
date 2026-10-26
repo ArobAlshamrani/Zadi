@@ -37,7 +37,8 @@ struct ToastPageLayout<Sandwich: View, Content: View>: View {
                 ? min(width * 0.75, height * 0.40)
                 : min(width * 0.34, height * 0.52)) * 0.75
             let buttonWidth = min(140, max(44, (width - 68) / 3))
-            // Follow the plate center even when aspect-fill crops the background.
+            // The plate center is at y = 250 in the 1194 x 834 background.
+            // Match the background's fill scale so the toast stays on the plate when cropped.
             let backgroundScale = max(width / 1194, height / 834)
             let plateY = height / 2 + (250 - 834 / 2) * backgroundScale
 
@@ -50,6 +51,7 @@ struct ToastPageLayout<Sandwich: View, Content: View>: View {
 
                 sandwich(sandwichSize)
                     .position(x: width * 0.5, y: plateY)
+                    // The toast is only a preview, so it should not intercept taps.
                     .allowsHitTesting(false)
 
                 VStack(spacing: 12) {
@@ -63,21 +65,12 @@ struct ToastPageLayout<Sandwich: View, Content: View>: View {
                 .position(x: width * 0.5, y: height * 0.5)
 
                 if showsBackButton {
-                    Button(action: goBack) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(Color(red: 0.30, green: 0.40, blue: 0.55))
-                            .frame(width: 52, height: 52)
-                            .background(.white.opacity(0.85), in: Circle())
-                            .shadow(color: .black.opacity(0.12), radius: 5, y: 3)
-                    }
-                    .buttonStyle(.plain)
-                    .position(
-                        x: max(geometry.safeAreaInsets.leading + 34, width * 0.055),
-                        y: max(geometry.safeAreaInsets.top + 34, height * 0.09)
-                    )
-                    .zIndex(100)
-                    .accessibilityLabel(backLabel)
+                    CircleBackButton(label: Text(backLabel), action: goBack)
+                        .position(
+                            x: max(geometry.safeAreaInsets.leading + 34, width * 0.055),
+                            y: max(geometry.safeAreaInsets.top + 34, height * 0.09)
+                        )
+                        .zIndex(100)
                 }
             }
             .frame(width: width, height: height)
@@ -101,12 +94,16 @@ struct SandwichView: View {
         ZStack {
 
             // Keep the same bread underneath every recipe step.
-            breadLayer(size: size)
+            // Layer the spread and protein above it, then the fruit or vegetables.
+            centeredArtwork("toast", canvas: ToastArtwork.breadCanvas, bounds: ToastArtwork.breadBounds,
+                            scale: size / ToastArtwork.breadBounds.width)
                 .zIndex(0)
 
             // if let unwraps the optional, so the spread is drawn only when one is selected.
             if let base = selectedBase {
-                SpreadLayer(base: base, size: size)
+                centeredArtwork(base.toppingImage, canvas: base.canvasSize, bounds: base.artworkBounds,
+                                scale: size * base.spreadScale
+                                    / max(base.artworkBounds.width, base.artworkBounds.height))
                     .offset(y: base == .chocolate ? size * ToastArtwork.sweetLayerOffsetY : 0)
                     .id(base)
                     .zIndex(1)
@@ -131,10 +128,7 @@ struct SandwichView: View {
 
             if !selectedFruits.isEmpty {
                 ForEach(ToastFruit.allCases.filter { selectedFruits.contains($0) }) { fruit in
-                    Image(fruit.piecesImage)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: size * fruit.scale, height: size * fruit.scale)
+                    topping(fruit.piecesImage, size: size * fruit.scale)
                         .rotationEffect(.degrees(fruit.rotation))
                         .offset(
                             x: size * fruit.offset.width,
@@ -149,22 +143,15 @@ struct SandwichView: View {
     }
 
     // MARK: - Artwork Helpers
-    // Center the visible bread rather than the PNG canvas, which includes uneven transparent margins.
-    private func breadLayer(size: CGFloat) -> some View {
-        let canvas = ToastArtwork.breadCanvas
-        let bounds = ToastArtwork.breadBounds
-
-        let breadWidth = size
-        let breadHeight = size * bounds.height / bounds.width
-        let scaleX = breadWidth / bounds.width
-        let scaleY = breadHeight / bounds.height
-
-        return Image("toast")
+    // Center the visible artwork rather than the PNG canvas, which includes uneven transparent margins.
+    private func centeredArtwork(_ imageName: String, canvas: CGSize, bounds: CGRect,
+                                 scale: CGFloat) -> some View {
+        Image(imageName)
             .resizable()
-            .frame(width: canvas.width * scaleX, height: canvas.height * scaleY)
+            .frame(width: canvas.width * scale, height: canvas.height * scale)
             .offset(
-                x: (canvas.width / 2 - bounds.midX) * scaleX,
-                y: (canvas.height / 2 - bounds.midY) * scaleY
+                x: (canvas.width / 2 - bounds.midX) * scale,
+                y: (canvas.height / 2 - bounds.midY) * scale
             )
             .frame(width: size, height: size)
     }
@@ -192,27 +179,4 @@ struct SandwichView: View {
 #Preview("Bread layout — Arabic", traits: .landscapeLeft) {
     ToastView(character: "boy")
         .environment(\.layoutDirection, .rightToLeft)
-}
-
-// MARK: - Spread Artwork
-// Use visible artwork bounds so transparent margins do not make the spread look off-center.
-private struct SpreadLayer: View {
-    let base: ToastBase
-    let size: CGFloat
-
-    // MARK: - UI
-    var body: some View {
-        let canvas = base.canvasSize
-        let bounds = base.artworkBounds
-        let scale = size * base.spreadScale / max(bounds.width, bounds.height)
-
-        Image(base.toppingImage)
-            .resizable()
-            .frame(width: canvas.width * scale, height: canvas.height * scale)
-            .offset(
-                x: (canvas.width / 2 - bounds.midX) * scale,
-                y: (canvas.height / 2 - bounds.midY) * scale
-            )
-            .frame(width: size, height: size)
-    }
 }

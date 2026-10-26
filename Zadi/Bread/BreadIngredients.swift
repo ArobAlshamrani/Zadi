@@ -9,6 +9,7 @@ protocol BreadIngredient: RawRepresentable, Identifiable, Hashable where RawValu
 
 extension BreadIngredient {
     var id: String { rawValue }
+    // The raw value must match the card's image asset name, including capitalization.
     var icon: String { rawValue }
 }
 
@@ -177,4 +178,106 @@ enum ToastArtwork {
     static let breadBounds = CGRect(x: 10, y: 0, width: 690, height: 683)
     static let proteinScale: CGFloat = 0.95
     static let sweetLayerOffsetY: CGFloat = -0.025
+}
+import SwiftUI
+
+// MARK: - Ingredient Messages
+// Ingredient information used by the shared coach and Bread's prerecorded audio.
+enum IngredientBenefit: String {
+    case chocolate
+    case cheese
+    case egg
+    case chicken
+    case turkey
+    case lettuce
+    case tomato
+    case cucumber
+    case banana
+    case strawberry
+    case apple
+    
+    // Short popup text and character expression for each ingredient.
+    fileprivate var addedReaction: (mood: Mood, text: String) {
+        switch self {
+        case .chocolate: return (.thinking, "لنجعلها أكثر فائدة!")
+        case .cheese: return (.thumbsUp, "أحسنت! لعظام وأسنان قوية!")
+        case .egg: return (.strong, "هيا نبني عضلات قوية!")
+        case .chicken: return (.overjoyed, "رائع! لنلعب ونتحرك بنشاط!")
+        case .turkey: return (.thumbsUp, "البروتين مفيد لأجسامنا!")
+        case .lettuce: return (.overjoyed, "يا سلام! إضافة خضراء مفيدة!")
+        case .tomato: return (.thumbsUp, "فيتامينات مفيدة لجسمنا!")
+        case .cucumber: return (.strong, "لنحافظ على صحة عظامنا!")
+        case .banana: return (.overjoyed, "أحسنت! طاقة للعب والقفز!")
+        case .strawberry: return (.yummy, "رائع! لنحافظ على صحتنا!")
+        case .apple: return (.thumbsUp, "التفاح لصحة أفضل!")
+        }
+    }
+
+}
+// MARK: - Food-to-Message Mapping
+// Extensions add a benefit property to existing food types without changing their definitions.
+extension ToastBase {
+    var benefit: IngredientBenefit {
+        switch self {
+        case .chocolate: return .chocolate
+        case .cheese: return .cheese
+        }
+    }
+}
+
+extension ToastProtein {
+    var benefit: IngredientBenefit {
+        switch self {
+        case .egg: return .egg
+        case .chicken: return .chicken
+        case .turkey: return .turkey
+        }
+    }
+}
+
+extension ToastFruit {
+    var benefit: IngredientBenefit {
+        switch self {
+        case .banana: return .banana
+        case .strawberry: return .strawberry
+        case .apple: return .apple
+        }
+    }
+}
+
+extension ToastVegetable {
+    var benefit: IngredientBenefit {
+        switch self {
+        case .lettuce: return .lettuce
+        case .tomato: return .tomato
+        case .cucumber: return .cucumber
+        }
+    }
+}
+
+// Bread adapts its ingredients to the shared coach
+extension IngredientBenefit {
+    var coachFood: Food {
+        // Match by benefit because artwork names can differ from ingredient IDs (e.g. "Chicken").
+        let title = ToastBase.allCases.first { $0.benefit == self }?.title
+            ?? ToastProtein.allCases.first { $0.benefit == self }?.title
+            ?? ToastVegetable.allCases.first { $0.benefit == self }?.title
+            ?? ToastFruit.allCases.first { $0.benefit == self }?.title
+            ?? rawValue
+        return Food(id: rawValue, arabicName: title, icon: rawValue,
+                    isHealthy: self != .chocolate)
+    }
+}
+
+extension IngredientBenefit {
+    func coachReaction(added: Bool, selected: [Food]) -> CoachMessage? {
+        // Chocolate uses the thinking face to encourage adding fruit.
+        // Each other ingredient uses its own expression from addedReaction.
+        guard !added else {
+            return CoachMessage(mood: addedReaction.mood, text: addedReaction.text, voice: "")
+        }
+        // Removals keep the shared Coach rules, but never declare the recipe complete.
+        let reaction = Coach.react(to: coachFood, added: false, selected: selected)
+        return reaction?.mood == .eating ? nil : reaction
+    }
 }

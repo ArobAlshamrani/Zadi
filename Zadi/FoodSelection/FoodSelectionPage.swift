@@ -1,7 +1,8 @@
 import SwiftUI
 
-// The entry screen owns navigation into a fresh toast recipe.
+// Open the chosen meal from this menu; entering Bread starts a fresh recipe.
 struct FoodSelectionPage: View {
+    // Use the selected boy or girl on this page and pass the choice to Bread and Rice.
     let character: String
     @Environment(\.dismiss) private var dismiss
     @State private var showsToast = false
@@ -16,27 +17,23 @@ struct FoodSelectionPage: View {
             #endif
     }
 
+    // Each meal's back action clears its flag to show the menu again.
     @ViewBuilder
     private var page: some View {
         if showsToast {
             ToastView(character: character, returnToFoodSelection: { showsToast = false })
         } else if showsPancake {
+            // The Pancake screen manages its character internally.
             PancakePlateView()
                 .overlay(alignment: .topLeading) {
-                    Button {
+                    CircleBackButton(label: Text("الرجوع لاختيار الوجبة")) {
                         showsPancake = false
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 22, weight: .bold))
-                            .frame(width: 52, height: 52)
-                            .background(.white.opacity(0.85), in: Circle())
                     }
-                    .buttonStyle(.plain)
                     .padding(24)
-                    .accessibilityLabel("الرجوع لاختيار الوجبة")
                 }
         } else if showsRice {
             GeometryReader { geometry in
+                // Scale the Rice screen from its original canvas to fit the available space.
                 let canvas = CGSize(width: 1366, height: 1100)
                 let scale = min(geometry.size.width / canvas.width, geometry.size.height / canvas.height)
                 RiceMealView(character: character)
@@ -45,17 +42,10 @@ struct FoodSelectionPage: View {
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
                     .overlay(alignment: .topLeading) {
-                        Button {
+                        CircleBackButton(label: Text("الرجوع لاختيار الوجبة")) {
                             showsRice = false
-                        } label: {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 22, weight: .bold))
-                                .frame(width: 52, height: 52)
-                                .background(.white.opacity(0.85), in: Circle())
                         }
-                        .buttonStyle(.plain)
                         .padding(24)
-                        .accessibilityLabel("الرجوع لاختيار الوجبة")
                     }
             }
             .ignoresSafeArea()
@@ -91,16 +81,16 @@ struct FoodSelectionPage: View {
 
                         ScrollView(.horizontal) {
                             HStack(spacing: spacing) {
-                                MealSelectionButton(title: "خبز", image: "Bread") {
+                                FoodChoiceButton(title: Text("خبز"), image: "Bread") {
                                     showsToast = true
                                 }
-                                MealSelectionButton(title: "بانكيك", image: "Pancake") {
+                                FoodChoiceButton(title: Text("بانكيك"), image: "PancakeSelect") {
                                     showsPancake = true
                                 }
-                                MealSelectionButton(title: "وجبات خفيفة", image: "popcorn") {
+                                FoodChoiceButton(title: Text("وجبات خفيفة"), image: "popcorn") {
                                     // This meal will be connected when its screen is available.
                                 }
-                                MealSelectionButton(title: "أرز", image: "RiceBowl") {
+                                FoodChoiceButton(title: Text("أرز"), image: "RiceBowl") {
                                     showsRice = true
                                 }
                             }
@@ -114,38 +104,17 @@ struct FoodSelectionPage: View {
                 }
                 .frame(width: width, height: height)
                 .overlay(alignment: .topLeading) {
-                    Button {
+                    CircleBackButton(label: Text("الرجوع لنبدأ")) {
+                        // Leave the meal menu and return to the Mission screen.
                         dismiss()
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(Color(red: 0.30, green: 0.40, blue: 0.55))
-                            .frame(width: 52, height: 52)
-                            .background(.white.opacity(0.85), in: Circle())
                     }
-                    .buttonStyle(.plain)
                     .padding(.leading, max(geometry.safeAreaInsets.leading + 8, width * 0.055 - 26))
                     .padding(.top, max(geometry.safeAreaInsets.top + 8, height * 0.09 - 26))
-                    .accessibilityLabel("الرجوع لنبدأ")
                 }
             }
             .ignoresSafeArea()
 
         }
-    }
-}
-
-private struct MealSelectionButton: View {
-    let title: LocalizedStringResource
-    let image: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            FoodCardLabel(title: Text(title), image: image)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(Text(title))
     }
 }
 

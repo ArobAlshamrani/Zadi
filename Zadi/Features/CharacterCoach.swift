@@ -22,6 +22,8 @@ struct Food: Hashable {
  
 enum Mood: String {
     case happy, thinking, excited, eating
+    // Extra expressions used by the Bread screen. Each needs girl_<mood> and boy_<mood> images.
+    case thumbsUp, strong, overjoyed, yummy
 }
  
 struct CoachMessage {
