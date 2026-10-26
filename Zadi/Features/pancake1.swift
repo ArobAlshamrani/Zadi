@@ -45,8 +45,7 @@ struct PancakePlateView: View {
     @State private var selectedToppings: Set<PancakeTopping> = []
 
     // Girl speech message
-    @State private var bubbleMessage: String? = nil
-
+    @State private var coachMessage: CoachMessage? = nil
     var body: some View {
 
         GeometryReader { geometry in
@@ -211,73 +210,18 @@ struct PancakePlateView: View {
                     y: h * 0.75
                 )
 
-                // MARK: - Girl Character
+               
+                // MARK: - Girl and Bubble
 
-                Image("girl")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(
-                        width: 230 * scale,
-                        height: 240 * scale
-                    )
-                    .position(
-                        x: w * 0.14,
-                        y: h * 0.87
-                    )
-                    .allowsHitTesting(false)
-
-                // MARK: - Girl Speech Bubble
-
-                if let message = bubbleMessage {
-
-                    VStack(spacing: -2) {
-
-                        Text(message)
-                            .font(
-                                .system(
-                                    size: 18 * scale,
-                                    weight: .bold
-                                )
-                            )
-                            .foregroundStyle(
-                                Color(
-                                    red: 0.18,
-                                    green: 0.30,
-                                    blue: 0.65
-                                )
-                            )
-                            .multilineTextAlignment(.center)
-                            .padding(14 * scale)
-                            .frame(width: 270 * scale)
-                            .background(Color.white)
-                            .clipShape(
-                                RoundedRectangle(
-                                    cornerRadius: 20 * scale
-                                )
-                            )
-
-                        Image(systemName: "arrowtriangle.down.fill")
-                            .font(.system(size: 20 * scale))
-                            .foregroundStyle(.white)
-                            .offset(x: -55 * scale)
-                    }
-                    .shadow(
-                        color: .black.opacity(0.18),
-                        radius: 6
-                    )
-                    .position(
-                        x: w * 0.15,
-                        y: h * 0.70
-                    )
-                    .transition(
-                        .scale.combined(with: .opacity)
-                    )
-                    .onTapGesture {
-                        withAnimation {
-                            bubbleMessage = nil
-                        }
-                    }
-                }
+               CharacterView(
+                   character: "girl",
+                   message: coachMessage
+               )
+               .scaleEffect(scale)
+               .position(
+                   x: w * 0.14,
+                   y: h * 0.87
+               )
 
                 // MARK: - Finish Button
 
@@ -287,10 +231,15 @@ struct PancakePlateView: View {
 
                         // No final alert.
                         // Girl congratulates the child instead.
+                       
                         withAnimation(.spring(response: 0.4)) {
-                            bubbleMessage =
-                                "أحسنت! 🎉\nجهزت وجبتك!"
+                            coachMessage = CoachMessage(
+                                mood: .eating,
+                                text: "أحسنت! جهزت وجبتك! 🎉",
+                                voice: "أحسنت! لقد جهزت وجبتك!"
+                            )
                         }
+
 
                     } label: {
 
@@ -342,9 +291,10 @@ struct PancakePlateView: View {
 
     // MARK: - Selection Logic
 
+    
     private func toggleTopping(_ topping: PancakeTopping) {
 
-        // Prevent choosing chocolate and honey together
+        // Prevent chocolate and honey together
         let sauceConflict =
             (topping == .chocolate &&
              selectedToppings.contains(.honey))
@@ -354,34 +304,37 @@ struct PancakePlateView: View {
 
         if sauceConflict {
 
-            withAnimation(.spring(response: 0.4)) {
-                bubbleMessage =
-                    "اختَر صوصًا واحدًا بس! 🍯🍫\nالعسل أو الشوكولاتة!"
-            }
-
+            coachMessage = CoachMessage(
+                mood: .thinking,
+                text: "اختَر صوصًا واحدًا بس! 🍯🍫",
+                voice: "يمكنك اختيار العسل أو الشوكولاتة فقط."
+            )
             return
         }
 
-        withAnimation(
-            .spring(response: 0.7, dampingFraction: 0.8)
-        ) {
+        if selectedToppings.contains(topping) {
 
-            if selectedToppings.contains(topping) {
-
-                // Remove topping
+            withAnimation {
                 selectedToppings.remove(topping)
-
-                bubbleMessage =
-                    "شِلنا \(topping.title)! 😊\nوش تبغى تختار بعد؟"
-
-            } else {
-
-                // Add topping
-                selectedToppings.insert(topping)
-
-                // Girl comments on each selection
-                bubbleMessage = toppingMessage(topping)
             }
+
+            coachMessage = CoachMessage(
+                mood: .thinking,
+                text: "ماذا نضيف الآن؟ 🤔",
+                voice: "ماذا تريد أن تضيف الآن؟"
+            )
+
+        } else {
+
+            withAnimation {
+                selectedToppings.insert(topping)
+            }
+
+            coachMessage = CoachMessage(
+                mood: .excited,
+                text: toppingMessage(topping),
+                voice: "رائع! اختيار جميل!"
+            )
         }
     }
 
