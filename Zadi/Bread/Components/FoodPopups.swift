@@ -113,6 +113,88 @@ extension ToastVegetable {
     }
 }
 
+// Bread adapts its ingredients to the shared coach
+extension IngredientBenefit {
+    var coachFood: Food {
+        let title = ToastBase(rawValue: rawValue)?.title
+            ?? ToastProtein(rawValue: rawValue)?.title
+            ?? ToastVegetable(rawValue: rawValue)?.title
+            ?? ToastFruit(rawValue: rawValue)?.title
+            ?? rawValue
+        return Food(id: rawValue, arabicName: title, icon: rawValue,
+                    isHealthy: self != .chocolate, voice: message)
+    }
+}
+
+// Bread-specific placement; the coach and popup remain unchanged.
+struct BreadCoachPopup: View {
+    let character: String
+    let message: CoachMessage
+
+    var body: some View {
+        GeometryReader { geometry in
+            let characterWidth = min(260, geometry.size.width * 0.19)
+            let characterHeight = min(320, geometry.size.height * 0.38)
+            let bubbleWidth = min(220, geometry.size.width * 0.16)
+
+            ZStack(alignment: .bottomLeading) {
+                Image("\(character)_\(message.mood.rawValue)")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: characterWidth, height: characterHeight, alignment: .bottom)
+                    // The portraits end at the torso. Seat that edge at the screen edge.
+                    .offset(y: 28)
+                    .accessibilityHidden(true)
+
+                Text(message.text)
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color(white: 0.25))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 16)
+                    .frame(width: bubbleWidth)
+                    .background(.white.opacity(0.92), in: RoundedRectangle(cornerRadius: 26))
+                    .overlay(alignment: .bottomLeading) {
+                        BreadSpeechTail()
+                            .fill(.white.opacity(0.92))
+                            .frame(width: 44, height: 38)
+                            .offset(x: 12, y: 37)
+                    }
+                    .shadow(color: .black.opacity(0.12), radius: 6, y: 3)
+                    .offset(x: characterWidth * 0.70, y: -characterHeight * 0.42)
+            }
+            .animation(.spring, value: message.text)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+        }
+        .ignoresSafeArea(edges: .bottom)
+        .environment(\.layoutDirection, .leftToRight)
+    }
+}
+
+private struct BreadSpeechTail: Shape {
+    func path(in rect: CGRect) -> Path {
+        Path { path in
+            path.move(to: CGPoint(x: rect.width * 0.35, y: 0))
+            path.addLine(to: CGPoint(x: 0, y: rect.height))
+            path.addLine(to: CGPoint(x: rect.width, y: 0))
+            path.closeSubpath()
+        }
+    }
+}
+
+#Preview("Bread coach girl", traits: .landscapeLeft) {
+    BreadCoachPopup(character: "girl", message: CoachMessage(
+        mood: .thinking, text: "حسنا دعنا نفكر للحظة...", voice: ""))
+        .background(Color.gray.opacity(0.15))
+}
+
+#Preview("Bread coach boy", traits: .landscapeLeft) {
+    BreadCoachPopup(character: "boy", message: CoachMessage(
+        mood: .excited, text: "اجل هذا اختيار رائع!!", voice: ""))
+        .background(Color.gray.opacity(0.15))
+}
+
 // MARK: - Ingredient Popup
 // ToastView decides which message appears; this view only presents it.
 struct IngredientBenefitPopup: View {

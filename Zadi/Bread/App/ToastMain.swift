@@ -2,6 +2,8 @@ import SwiftUI
 
 // Owns the recipe so selections stay available when pages change.
 struct ToastView: View {
+    let character: String
+    @State private var coachMessage: CoachMessage?
     var returnToFoodSelection: (() -> Void)? = nil
     // MARK: - State
     // @State keeps values between view updates and refreshes the UI when they change.
@@ -61,7 +63,7 @@ struct ToastView: View {
                             if selectedProtein != nil {
                                 selectedFruits.removeAll()
                             }
-                            activeBenefit = selectedProtein != nil ? protein.benefit : nil
+                            react(to: protein.benefit, added: selectedProtein != nil)
                         }
                     },
                     next: advance
@@ -77,13 +79,13 @@ struct ToastView: View {
                     toggleFruit: { fruit in
                         withAnimation(popupAnimation) {
                             selectedFruits.toggle(fruit)
-                            activeBenefit = selectedFruits.contains(fruit) ? fruit.benefit : nil
+                            react(to: fruit.benefit, added: selectedFruits.contains(fruit))
                         }
                     },
                     toggleVegetable: { vegetable in
                         withAnimation(popupAnimation) {
                             selectedVegetables.toggle(vegetable)
-                            activeBenefit = selectedVegetables.contains(vegetable) ? vegetable.benefit : nil
+                            react(to: vegetable.benefit, added: selectedVegetables.contains(vegetable))
                         }
                     },
                     finish: {
@@ -97,12 +99,9 @@ struct ToastView: View {
                     .transition(.scale.combined(with: .opacity))
             }
         }
-        // Keep the latest ingredient message visible until it is cleared or the recipe finishes.
-        .overlay {
-            if let activeBenefit, step != .finished {
-                IngredientBenefitPopup(benefit: activeBenefit)
-                    .id(activeBenefit)
-                    // Let taps reach the ingredient cards beneath the popup.
+        .overlay(alignment: .bottomLeading) {
+            if let coachMessage, step != .finished {
+                BreadCoachPopup(character: character, message: coachMessage)
                     .allowsHitTesting(false)
                     .zIndex(200)
             }
@@ -119,6 +118,31 @@ struct ToastView: View {
         .onDisappear {
             ingredientAudio?.stop()
         }
+    }
+
+    // Adapt Bread selections to the teammate's shared rules; audio stays in Bread.
+    private var selectedFoods: [Food] {
+        var benefits: [IngredientBenefit] = []
+        if let selectedBase { benefits.append(selectedBase.benefit) }
+        if let selectedProtein { benefits.append(selectedProtein.benefit) }
+        benefits += ToastFruit.allCases.filter { selectedFruits.contains($0) }.map(\.benefit)
+        benefits += ToastVegetable.allCases.filter { selectedVegetables.contains($0) }.map(\.benefit)
+        return benefits.map(\.coachFood)
+    }
+
+    private func react(to benefit: IngredientBenefit, added: Bool) {
+        let reaction = Coach.react(to: benefit.coachFood, added: added, selected: selectedFoods)
+        // Ingredient taps are encouragement, never a declaration that the recipe is finished.
+        if added && benefit == .chocolate {
+            coachMessage = CoachMessage(mood: .thinking, text: "دعنا نفكر", voice: benefit.message)
+        } else if reaction?.mood == .eating {
+            coachMessage = added
+                ? CoachMessage(mood: .excited, text: "اجل هذا اختيار رائع!!", voice: benefit.message)
+                : nil
+        } else {
+            coachMessage = reaction
+        }
+        activeBenefit = added ? benefit : nil
     }
 
     // MARK: - Audio
@@ -145,7 +169,6 @@ struct ToastView: View {
     private func chooseBase(_ base: ToastBase) {
         withAnimation(popupAnimation) {
             selectedBase = selectedBase == base ? nil : base
-            activeBenefit = selectedBase != nil ? base.benefit : nil
             // Chocolate pairs with fruit; cheese pairs with protein and vegetables.
             if selectedBase == .chocolate {
                 selectedProtein = nil
@@ -153,6 +176,7 @@ struct ToastView: View {
             } else if selectedBase == .cheese {
                 selectedFruits.removeAll()
             }
+            react(to: base.benefit, added: selectedBase != nil)
         }
         // Chocolate goes straight to fruit because this recipe's sweet path has no protein step.
         if selectedBase == .chocolate {
@@ -182,6 +206,7 @@ struct ToastView: View {
         ingredientAudio?.stop()
         withAnimation {
             activeBenefit = nil
+            coachMessage = nil
             switch step {
             case .protein:
                 step = .base
@@ -200,6 +225,7 @@ struct ToastView: View {
         ingredientAudio?.stop()
         withAnimation {
             activeBenefit = nil
+            coachMessage = nil
             selectedBase = nil
             selectedProtein = nil
             selectedVegetables.removeAll()
@@ -225,7 +251,7 @@ private extension Set {
 
 // MARK: - Preview
 #Preview(traits: .landscapeLeft) {
-    ToastView()
+    ToastView(character: "girl")
 }
 
 

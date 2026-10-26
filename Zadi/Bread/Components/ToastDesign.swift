@@ -55,11 +55,12 @@ struct ToastPageLayout<Sandwich: View, Content: View>: View {
                 VStack(spacing: 12) {
                     Spacer()
                     content(buttonWidth)
+                        .environment(\.layoutDirection, .rightToLeft)
                     Spacer()
                         .frame(height: height * 0.075)
                 }
-                .frame(width: width)
-                .environment(\.layoutDirection, .rightToLeft)
+                .frame(width: width, height: height)
+                .position(x: width * 0.5, y: height * 0.5)
 
                 if showsBackButton {
                     Button(action: goBack) {
@@ -82,6 +83,8 @@ struct ToastPageLayout<Sandwich: View, Content: View>: View {
             .frame(width: width, height: height)
         }
         .ignoresSafeArea()
+        // Physical positions stay fixed; Arabic direction is scoped to the controls above.
+        .environment(\.layoutDirection, .leftToRight)
     }
 }
 
@@ -184,6 +187,11 @@ struct SandwichView: View {
         selectedVegetables: [],
         selectedFruits: Set(ToastFruit.allCases)
     )
+}
+
+#Preview("Bread layout — Arabic", traits: .landscapeLeft) {
+    ToastView(character: "boy")
+        .environment(\.layoutDirection, .rightToLeft)
 }
 
 // MARK: - Spread Artwork

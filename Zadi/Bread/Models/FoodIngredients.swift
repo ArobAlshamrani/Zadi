@@ -45,7 +45,7 @@ enum ToastBase: String, CaseIterable, Identifiable {
 // MARK: - Proteins
 enum ToastProtein: String, CaseIterable, Identifiable {
     case egg
-    case chicken
+    case chicken = "Chicken"
     case turkey
 
     var id: String { rawValue }
