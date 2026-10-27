@@ -144,3 +144,77 @@ struct CharacterView: View {
     }
 }
  
+
+// MARK: - Pancake Coach Messages
+
+extension Coach {
+
+   // When the child adds a topping
+   static func pancakeAdded(id: String) -> CoachMessage {
+
+       switch id {
+
+       case "chocolate":
+           return CoachMessage(
+               mood: .excited,
+               text: "واو! الشوكولاتة لذيذة! 🍫",
+               voice: "واو! أضفت الشوكولاتة إلى البانكيك!"
+           )
+
+       case "strawberry":
+           return CoachMessage(
+               mood: .happy,
+               text: "اختيار جميل! 🍓",
+               voice: "رائع! الفراولة تضيف لونًا جميلًا إلى وجبتك!"
+           )
+
+       case "banana":
+           return CoachMessage(
+               mood: .excited,
+               text: "أحسنت! الموز رائع! 🍌",
+               voice: "أحسنت! الموز إضافة لذيذة ومغذية!"
+           )
+
+       case "honey":
+           return CoachMessage(
+               mood: .happy,
+               text: "يا سلام! عسل! 🍯",
+               voice: "جميل! أضفت العسل إلى البانكيك!"
+           )
+
+       default:
+           return CoachMessage(
+               mood: .happy,
+               text: "اختيار جميل!",
+               voice: "اختيار جميل!"
+           )
+       }
+   }
+
+   // When the child removes a topping
+   static func pancakeRemoved(name: String) -> CoachMessage {
+       CoachMessage(
+           mood: .thinking,
+           text: "ماذا نختار الآن؟ 🤔",
+           voice: "أزلنا \(name). ماذا تريد أن تختار الآن؟"
+       )
+   }
+
+   // When the child tries honey and chocolate together
+   static func pancakeSauceConflict() -> CoachMessage {
+       CoachMessage(
+           mood: .thinking,
+           text: "اختَر صوصًا واحدًا بس! 🍯🍫",
+           voice: "يمكنك اختيار العسل أو الشوكولاتة، وليس الاثنين معًا."
+       )
+   }
+
+   // When the child finishes
+   static func pancakeFinished() -> CoachMessage {
+       CoachMessage(
+           mood: .eating,
+           text: "أحسنت! جهزت وجبتك! 🎉",
+           voice: "أحسنت! لقد جهزت وجبتك! بالعافية!"
+       )
+   }
+}

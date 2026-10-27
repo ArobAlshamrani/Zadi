@@ -292,9 +292,10 @@ struct PancakePlateView: View {
     // MARK: - Selection Logic
 
     
+    
     private func toggleTopping(_ topping: PancakeTopping) {
 
-        // Prevent chocolate and honey together
+        // Check if both sauces are selected
         let sauceConflict =
             (topping == .chocolate &&
              selectedToppings.contains(.honey))
@@ -304,38 +305,37 @@ struct PancakePlateView: View {
 
         if sauceConflict {
 
-            coachMessage = CoachMessage(
-                mood: .thinking,
-                text: "اختَر صوصًا واحدًا بس! 🍯🍫",
-                voice: "يمكنك اختيار العسل أو الشوكولاتة فقط."
-            )
-            return
-        }
+            coachMessage = Coach.pancakeSauceConflict()
 
-        if selectedToppings.contains(topping) {
+        } else if selectedToppings.contains(topping) {
 
-            withAnimation {
-                selectedToppings.remove(topping)
+            // Remove the topping
+            withAnimation(.spring()) {
+                _ = selectedToppings.remove(topping)
             }
 
-            coachMessage = CoachMessage(
-                mood: .thinking,
-                text: "ماذا نضيف الآن؟ 🤔",
-                voice: "ماذا تريد أن تضيف الآن؟"
+            coachMessage = Coach.pancakeRemoved(
+                name: topping.title
             )
 
         } else {
 
-            withAnimation {
+            // Add the topping
+            withAnimation(.spring()) {
                 selectedToppings.insert(topping)
             }
 
-            coachMessage = CoachMessage(
-                mood: .excited,
-                text: toppingMessage(topping),
-                voice: "رائع! اختيار جميل!"
+            coachMessage = Coach.pancakeAdded(
+                id: topping.rawValue
             )
         }
+
+        // Speak the message
+        if let message = coachMessage {
+            Speaker.shared.say(message.voice)
+        }
+    }
+
     }
 
     // MARK: - Girl Messages
@@ -401,4 +401,4 @@ struct PancakePlateView: View {
         case .honey: return -10
         }
     }
-}
+
