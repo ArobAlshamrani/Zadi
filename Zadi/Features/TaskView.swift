@@ -5,18 +5,17 @@ import AVFoundation
 struct TaskView: View {
 
     // MARK: - Properties
+
     let character: String
     let meal: MealOption
     let onReturnHome: () -> Void
 
-    // MARK: - Environment
-    @Environment(\.dismiss) private var dismiss
+    // MARK: - Audio
 
-    // MARK: - State
-    @State private var isTrying = false
     @State private var speechSynthesizer = AVSpeechSynthesizer()
 
     // MARK: - Character
+
     private var isGirl: Bool {
         character == "girl"
     }
@@ -26,6 +25,7 @@ struct TaskView: View {
     }
 
     // MARK: - Task Title
+
     private var taskTitle: String {
         switch meal {
 
@@ -44,6 +44,7 @@ struct TaskView: View {
     }
 
     // MARK: - Task Description
+
     private var taskDescription: String {
         switch meal {
 
@@ -69,7 +70,8 @@ struct TaskView: View {
         }
     }
 
-    // MARK: - Body
+    // MARK: - Main Screen
+
     var body: some View {
 
         GeometryReader { geometry in
@@ -80,6 +82,7 @@ struct TaskView: View {
             ZStack {
 
                 // MARK: - Background
+
                 Image("Taskbackground")
                     .resizable()
                     .scaledToFill()
@@ -87,6 +90,7 @@ struct TaskView: View {
                     .clipped()
 
                 // MARK: - Character
+
                 Image(characterImage)
                     .resizable()
                     .scaledToFit()
@@ -100,6 +104,7 @@ struct TaskView: View {
                     )
 
                 // MARK: - Notebook
+
                 ZStack {
 
                     Image("TaskNotebook")
@@ -111,132 +116,76 @@ struct TaskView: View {
                         )
 
                     // MARK: - Notebook Content
+
                     VStack(spacing: height * 0.018) {
 
-                        if isTrying {
+                        // Task Title
 
-                            // MARK: - Encouragement
-                            Text(
-                                isGirl
-                                ? "يا بطلة! 🌟"
-                                : "يا بطل! 🌟"
-                            )
+                        Text(taskTitle)
                             .font(.system(
-                                size: height * 0.05,
+                                size: height * 0.045,
                                 weight: .bold
-                            ))
-                            .foregroundStyle(.green)
-
-                            Text(
-                                isGirl
-                                ? "مغامرتك مستمرة!\nجرّبي مهمتك مع عائلتك."
-                                : "مغامرتك مستمرة!\nجرّب مهمتك مع عائلتك."
-                            )
-                            .font(.system(
-                                size: height * 0.035,
-                                weight: .semibold
                             ))
                             .foregroundStyle(.black)
                             .multilineTextAlignment(.center)
 
-                        } else {
+                        // Task Description
 
-                            // MARK: - Task Title
-                            Text(taskTitle)
-                                .font(.system(
-                                    size: height * 0.045,
-                                    weight: .bold
-                                ))
-                                .foregroundStyle(.black)
-                                .multilineTextAlignment(.center)
+                        Text(taskDescription)
+                            .font(.system(
+                                size: height * 0.032,
+                                weight: .semibold
+                            ))
+                            .foregroundStyle(.black)
+                            .multilineTextAlignment(.center)
+                            .lineSpacing(3)
+                            .lineLimit(3)
+                            .minimumScaleFactor(0.8)
 
-                            // MARK: - Task Description
-                            Text(taskDescription)
-                                .font(.system(
-                                    size: height * 0.032,
-                                    weight: .semibold
-                                ))
-                                .foregroundStyle(.black)
-                                .multilineTextAlignment(.center)
-                                .lineSpacing(3)
-                                .lineLimit(3)
-                                .minimumScaleFactor(0.8)
+                        // MARK: - Return to Main Page
 
-                            // MARK: - Buttons
-                            HStack(spacing: width * 0.012) {
+                        Button {
 
-                                // Return Home Button
-                                Button {
-                                    speechSynthesizer.stopSpeaking(
-                                        at: .immediate
-                                    )
-                                    onReturnHome()
-                                } label: {
+                            speechSynthesizer.stopSpeaking(
+                                at: .immediate
+                            )
 
-                                    HStack(spacing: 5) {
+                            onReturnHome()
 
-                                        Image(systemName: "house.fill")
+                        } label: {
 
-                                        Text("العودة للواجهة")
-                                    }
-                                    .font(.system(
-                                        size: height * 0.026,
-                                        weight: .bold
-                                    ))
-                                    .foregroundStyle(.black)
-                                    .frame(
-                                        width: width * 0.19,
-                                        height: height * 0.075
-                                    )
-                                    .background(
-                                        Color(
-                                            red: 1.0,
-                                            green: 0.86,
-                                            blue: 0.15
-                                        ),
-                                        in: Capsule()
-                                    )
-                                }
-                                .buttonStyle(.plain)
-
-                                // Try Button
-                                Button {
-                                    startTask()
-                                } label: {
-
-                                    Text("سأجرب! ⭐")
-                                        .font(.system(
-                                            size: height * 0.029,
-                                            weight: .bold
-                                        ))
-                                        .foregroundStyle(.white)
-                                        .frame(
-                                            width: width * 0.19,
-                                            height: height * 0.075
-                                        )
-                                        .background(
-                                            Color(
-                                                red: 0.24,
-                                                green: 0.69,
-                                                blue: 0.32
-                                            ),
-                                            in: Capsule()
-                                        )
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .padding(.top, height * 0.02)
+                            Label(
+                                "العودة للواجهة",
+                                systemImage: "house.fill"
+                            )
+                            .font(.system(
+                                size: height * 0.026,
+                                weight: .bold
+                            ))
+                            .foregroundStyle(.black)
+                            .frame(
+                                width: width * 0.24,
+                                height: height * 0.075
+                            )
+                            .background(
+                                Color(
+                                    red: 1.0,
+                                    green: 0.86,
+                                    blue: 0.15
+                                ),
+                                in: Capsule()
+                            )
                         }
+                        .buttonStyle(.plain)
+                        .padding(.top, height * 0.02)
+
                     }
                     .frame(
                         width: width * 0.43,
                         height: height * 0.28
                     )
                     .offset(y: height * 0.04)
-                    .animation(
-                        .easeInOut(duration: 0.25),
-                        value: isTrying
-                    )
+
                 }
                 .frame(
                     width: width * 0.62,
@@ -247,79 +196,22 @@ struct TaskView: View {
                     y: height * 0.53
                 )
 
-                // MARK: - Back Button
-                Button {
-                    speechSynthesizer.stopSpeaking(at: .immediate)
-                    dismiss()
-                } label: {
+                // MARK: - Shared Sound Button
 
-                    Image(systemName: "arrow.left")
-                        .font(.system(
-                            size: height * 0.035,
-                            weight: .bold
-                        ))
-                        .foregroundStyle(
-                            Color(
-                                red: 0.20,
-                                green: 0.30,
-                                blue: 0.45
-                            )
-                        )
-                        .frame(
-                            width: height * 0.10,
-                            height: height * 0.10
-                        )
-                        .background(
-                            Color.white.opacity(0.35),
-                            in: Circle()
-                        )
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("رجوع")
-                .position(
-                    x: width * 0.07,
-                    y: height * 0.10
+                ZadiTopControls(
+                    onBack: {},
+                    onSound: playTaskAudio,
+                    showsBackButton: false
                 )
                 .zIndex(10)
 
-                // MARK: - Sound Button
-                Button {
-                    playTaskAudio()
-                } label: {
+            }
+            .frame(
+                width: width,
+                height: height
+            )
 
-                    Image(systemName: "speaker.wave.2.fill")
-                        .font(.system(
-                            size: height * 0.035,
-                            weight: .bold
-                        ))
-                        .foregroundStyle(
-                            Color(
-                                red: 0.20,
-                                green: 0.30,
-                                blue: 0.45
-                            )
-                        )
-                        .frame(
-                            width: height * 0.10,
-                            height: height * 0.10
-                        )
-                        .background(
-                            Color.white.opacity(0.35),
-                            in: Circle()
-                        )
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("استمع إلى المهمة")
-                .position(
-                    x: width * 0.93,
-                    y: height * 0.10
-                )
-                .zIndex(10)
-
-            } // End ZStack
-            .frame(width: width, height: height)
-
-        } // End GeometryReader
+        }
         .ignoresSafeArea()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
@@ -328,27 +220,8 @@ struct TaskView: View {
         }
     }
 
-    // MARK: - Task Action
-    private func startTask() {
-
-        guard !isTrying else { return }
-
-        speechSynthesizer.stopSpeaking(at: .immediate)
-
-        withAnimation(.easeInOut(duration: 0.25)) {
-            isTrying = true
-        }
-
-        Task {
-            try? await Task.sleep(for: .seconds(3))
-
-            guard !Task.isCancelled else { return }
-
-            onReturnHome()
-        }
-    }
-
     // MARK: - Play Task Audio
+
     private func playTaskAudio() {
 
         if speechSynthesizer.isSpeaking {
@@ -369,10 +242,10 @@ struct TaskView: View {
 
         speechSynthesizer.speak(utterance)
     }
-
-} // End TaskView
+}
 
 // MARK: - Preview
+
 #Preview(traits: .landscapeLeft) {
     NavigationStack {
         TaskView(

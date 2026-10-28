@@ -143,4 +143,78 @@ struct CharacterView: View {
         .shadow(color: .black.opacity(0.12), radius: 6, y: 3)
     }
 }
+
+// MARK: - Pancake Coach Messages
+
+extension Coach {
+
+   // When adding a topping
+   static func pancakeAdded(id: String) -> CoachMessage {
+       switch id {
+
+       case "chocolate":
+           return CoachMessage(
+               mood: .excited,
+               text: "واو! الشوكولاتة لذيذة! 🍫",
+               voice: "واو! أضفت الشوكولاتة إلى البانكيك!"
+           )
+
+       case "strawberry":
+           return CoachMessage(
+               mood: .happy,
+               text: "اختيار جميل! 🍓",
+               voice: "رائع! الفراولة تضيف لونًا جميلًا إلى وجبتك!"
+           )
+
+       case "banana":
+           return CoachMessage(
+               mood: .excited,
+               text: "أحسنت! الموز رائع! 🍌",
+               voice: "أحسنت! الموز إضافة لذيذة ومغذية!"
+           )
+
+       case "honey":
+           return CoachMessage(
+               mood: .happy,
+               text: "يا سلام! عسل! 🍯",
+               voice: "جميل! أضفت العسل إلى البانكيك!"
+           )
+
+       default:
+           return CoachMessage(
+               mood: .happy,
+               text: "اختيار جميل!",
+               voice: "اختيار جميل!"
+           )
+       }
+   }
+
+   // When removing a topping
+   static func pancakeRemoved(name: String) -> CoachMessage {
+       CoachMessage(
+           mood: .thinking,
+           text: "ماذا نختار الآن؟ 🤔",
+           voice: "أزلنا \(name). ماذا تريد أن تختار الآن؟"
+       )
+   }
+
+   // When selecting honey and chocolate together
+   static func pancakeSauceConflict() -> CoachMessage {
+       CoachMessage(
+           mood: .thinking,
+           text: "اختَر صوصًا واحدًا بس! 🍯🍫",
+           voice: "يمكنك اختيار العسل أو الشوكولاتة، وليس الاثنين معًا."
+       )
+   }
+
+   // When finishing the meal
+   static func pancakeFinished() -> CoachMessage {
+       CoachMessage(
+           mood: .eating,
+           text: "أحسنت! جهزت وجبتك! 🎉",
+           voice: "أحسنت! لقد جهزت وجبتك! بالعافية!"
+       )
+   }
+}
+
  

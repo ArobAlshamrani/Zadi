@@ -180,40 +180,16 @@ struct MissionView: View {
 
                
 
-                // MARK: - Sound Button
-                Button {
-                    playMissionAudio()
-                } label: {
+            
+                // MARK: - Shared Back & Sound Buttons
 
-                    Image(systemName: "speaker.wave.2.fill")
-                        .font(.system(
-                            size: height * 0.035,
-                            weight: .bold
-                        ))
-                        .foregroundStyle(
-                            Color(
-                                red: 0.20,
-                                green: 0.30,
-                                blue: 0.45
-                            )
-                        )
-                        .frame(
-                            width: height * 0.10,
-                            height: height * 0.10
-                        )
-                        .background(
-                            Color.white.opacity(0.35),
-                            in: Circle()
-                        )
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("استمع إلى المهمة")
-                .position(
-                    x: width * 0.93,
-                    y: height * 0.10
+                ZadiTopControls(
+                    onBack: {},
+                    onSound: playMissionAudio,
+                    showsBackButton: false
                 )
-                .zIndex(10)
-
+                .zIndex(100)
+                
                 // MARK: - Change Character Button
                 Button {
                     speechSynthesizer.stopSpeaking(at: .immediate)
