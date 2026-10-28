@@ -55,28 +55,25 @@ struct FoodChoiceButton: View {
 
 // Shared by Bread's Next and Finish controls.
 struct BreadActionButton: View {
+
     let title: LocalizedStringKey
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 19, weight: .bold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 34)
-                .padding(.vertical, 12)
-                .background(Color(red: 0.05, green: 0.78, blue: 0.28), in: Capsule())
-        }
-        .buttonStyle(.plain)
+        ZadiActionButton(
+            title: title,
+            action: action
+        )
     }
 }
+
 
 // Same design as the back button in MissionView, so every screen shares one look.
 // Callers keep their own position, action and accessibility label.
 struct CircleBackButton: View {
     let label: Text
     let action: () -> Void
-
+    
     var body: some View {
         Button(action: action) {
             Image(systemName: "chevron.left")

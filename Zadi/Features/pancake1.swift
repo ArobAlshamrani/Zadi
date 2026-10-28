@@ -1,6 +1,6 @@
 
 import SwiftUI
-
+import AVFoundation
 // MARK: - Toppings
 
 enum PancakeTopping: String, CaseIterable, Identifiable {
@@ -37,15 +37,32 @@ enum PancakeTopping: String, CaseIterable, Identifiable {
 
 // MARK: - Pancake Page
 
+
 struct PancakePlateView: View {
 
+    // MARK: - Selected Character
+    let character: String
+    var returnToFoodSelection: (() -> Void)? = nil
+
+    private var isGirl: Bool {
+        character == "girl"
+    }
+
+    // MARK: - Audio & Navigation
+    @Environment(\.returnToHome) private var returnToHome
+
+    @State private var speechSynthesizer = AVSpeechSynthesizer()
+    @State private var goToTask = false
+    @State private var isFinishing = false
     @State private var firstPancake = false
     @State private var secondPancake = false
-
+    @State private var isCelebrating = false
+    @State private var returnToMealMenuAfterDismiss = false
     @State private var selectedToppings: Set<PancakeTopping> = []
 
     // Girl speech message
     @State private var coachMessage: CoachMessage? = nil
+    @Environment(\.dismiss) private var dismiss
     var body: some View {
 
         GeometryReader { geometry in
@@ -209,59 +226,67 @@ struct PancakePlateView: View {
                     x: w * 0.50,
                     y: h * 0.75
                 )
+                .opacity(isCelebrating ? 0 : 1)
+                .allowsHitTesting(!isCelebrating)
 
-               
+                // MARK: - Shared Back & Sound Buttons
+                ZadiTopControls(
+                        onBack: {
+                            speechSynthesizer.stopSpeaking(at: .immediate)
+                            Speaker.shared.stop()
+
+                            if let returnToFoodSelection {
+                                returnToFoodSelection()
+                            } else {
+                                dismiss()
+                            }
+                        },
+                        onSound: playPancakeAudio
+
+                )
+                .zIndex(100)
+
                 // MARK: - Girl and Bubble
 
-               CharacterView(
-                   character: "girl",
-                   message: coachMessage
-               )
+                CharacterView(
+                    character: character,
+                    message: coachMessage
+                )
                .scaleEffect(scale)
                .position(
                    x: w * 0.14,
                    y: h * 0.87
                )
+               .opacity(isCelebrating ? 0 : 1)
+               .allowsHitTesting(!isCelebrating)
 
-                // MARK: - Finish Button
 
-                if !selectedToppings.isEmpty {
+          
+                    // MARK: - Finish Button
 
-                    Button {
+                    if !selectedToppings.isEmpty && !isCelebrating {
 
-                        // No final alert.
-                        // Girl congratulates the child instead.
-                       
-                        withAnimation(.spring(response: 0.4)) {
-                            coachMessage = CoachMessage(
-                                mood: .eating,
-                                text: "أحسنت! جهزت وجبتك! 🎉",
-                                voice: "أحسنت! لقد جهزت وجبتك!"
-                            )
+                        ZadiActionButton(
+                            title: "خلصت وجبتي!",
+                            icon: "checkmark.circle.fill"
+                        ) {
+                            Speaker.shared.stop()
+
+                            withAnimation(.spring(response: 0.5)) {
+                                isCelebrating = true
+                            }
                         }
-
-
-                    } label: {
-
-                        Text("انتهيت!")
-                            .font(
-                                .system(
-                                    size: 20 * scale,
-                                    weight: .bold
-                                )
-                            )
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 30 * scale)
-                            .padding(.vertical, 10 * scale)
-                            .background(Color.green)
-                            .clipShape(Capsule())
+                        .scaleEffect(scale)
+                        .position(
+                            x: w * 0.50,
+                            y: h * 0.90
+                        )
                     }
-                    .buttonStyle(.plain)
-                    .position(
-                        x: w * 0.50,
-                        y: h * 0.90
-                    )
-                }
+
+                    
+
+
+
 
             }
             .frame(width: w, height: h)
@@ -271,6 +296,123 @@ struct PancakePlateView: View {
             }
         }
         .ignoresSafeArea()
+        
+       
+        // MARK: - Shared Ending Scene
+
+        .fullScreenCover(
+            isPresented: $isCelebrating,
+            onDismiss: {
+                if returnToMealMenuAfterDismiss {
+                    returnToMealMenuAfterDismiss = false
+
+                    if let returnToFoodSelection {
+                        returnToFoodSelection()
+                    } else {
+                        dismiss()
+                    }
+                }
+            }
+        ) {
+            NavigationStack {
+
+                ZadiMealEndingScene(
+                    character: character,
+                    mealImage: "pancake",
+
+                    // Pancakes with the child's chosen toppings
+                    mealArtwork: AnyView(
+                        ZStack {
+
+                            Image("pancake")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 165)
+                                .offset(y: 8)
+
+                            Image("pancake")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 165)
+                                .offset(y: -4)
+
+                            ForEach(PancakeTopping.overlayOrder) { topping in
+                                if selectedToppings.contains(topping) {
+
+                                    Image(topping.topImage)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(
+                                            width: toppingWidth(topping) * 0.55
+                                        )
+                                        .offset(
+                                            x: toppingX(topping) * 0.55,
+                                            y: toppingY(topping) * 0.55
+                                        )
+                                }
+                            }
+                        }
+                        .frame(width: 230, height: 190)
+                        .scaleEffect(y: 0.70)
+                        .offset(y: 15)
+                    ),
+
+                    onAnotherMeal: {
+                        speechSynthesizer.stopSpeaking(at: .immediate)
+                        Speaker.shared.stop()
+
+                        goToTask = false
+                        returnToMealMenuAfterDismiss = true
+                        isCelebrating = false
+                    },
+
+                    onStartTask: {
+                        speechSynthesizer.stopSpeaking(at: .immediate)
+                        Speaker.shared.stop()
+                        goToTask = true
+                    }
+                )
+                .navigationDestination(isPresented: $goToTask) {
+
+                    TaskView(
+                        character: character,
+                        meal: .pancake,
+                        onReturnHome: {
+                            goToTask = false
+                            isCelebrating = false
+                            returnToHome()
+                        }
+                    )
+                }
+            }
+        }
+
+        .onDisappear {
+            speechSynthesizer.stopSpeaking(at: .immediate)
+        }
+
+    }
+
+    // MARK: - Play Pancake Audio
+    private func playPancakeAudio() {
+
+        if speechSynthesizer.isSpeaking {
+            speechSynthesizer.stopSpeaking(at: .immediate)
+            return
+        }
+
+       
+        let instructions = isGirl
+            ? "هيا نزيّن البانكيك! اختاري الإضافات التي تحبينها، وعندما تنتهين اضغطي زر انتهيت."
+            : "هيا نزيّن البانكيك! اختر الإضافات التي تحبها، وعندما تنتهي اضغط زر انتهيت."
+
+        let message = AVSpeechUtterance(string: instructions)
+
+
+        message.voice = AVSpeechSynthesisVoice(language: "ar-SA")
+        message.rate = 0.45
+
+        speechSynthesizer.speak(message)
     }
 
     // MARK: - Pancake Animation
@@ -289,55 +431,50 @@ struct PancakePlateView: View {
         }
     }
 
+
     // MARK: - Selection Logic
 
-    
     private func toggleTopping(_ topping: PancakeTopping) {
 
-        // Prevent chocolate and honey together
         let sauceConflict =
             (topping == .chocolate &&
              selectedToppings.contains(.honey))
             ||
             (topping == .honey &&
              selectedToppings.contains(.chocolate))
-
-        if sauceConflict {
-
-            coachMessage = CoachMessage(
-                mood: .thinking,
-                text: "اختَر صوصًا واحدًا بس! 🍯🍫",
-                voice: "يمكنك اختيار العسل أو الشوكولاتة فقط."
-            )
-            return
-        }
-
-        if selectedToppings.contains(topping) {
-
-            withAnimation {
-                selectedToppings.remove(topping)
+            
+            if sauceConflict {
+                
+                coachMessage = Coach.pancakeSauceConflict()
+                
+            } else if selectedToppings.contains(topping) {
+                
+                withAnimation(.spring()) {
+                    _ = selectedToppings.remove(topping)
+                }
+                
+                coachMessage = Coach.pancakeRemoved(
+                    name: topping.title
+                )
+                
+            } else {
+                
+                withAnimation(.spring()) {
+                    _ = selectedToppings.insert(topping)
+                }
+                
+                coachMessage = Coach.pancakeAdded(
+                    id: topping.rawValue
+                )
             }
-
-            coachMessage = CoachMessage(
-                mood: .thinking,
-                text: "ماذا نضيف الآن؟ 🤔",
-                voice: "ماذا تريد أن تضيف الآن؟"
-            )
-
-        } else {
-
-            withAnimation {
-                selectedToppings.insert(topping)
+            
+            // Play the new encouragement audio
+            if let coachMessage {
+                speechSynthesizer.stopSpeaking(at: .immediate)
+                Speaker.shared.say(coachMessage.voice)
             }
-
-            coachMessage = CoachMessage(
-                mood: .excited,
-                text: toppingMessage(topping),
-                voice: "رائع! اختيار جميل!"
-            )
         }
-    }
-
+    
     // MARK: - Girl Messages
 
     private func toppingMessage(

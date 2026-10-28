@@ -30,7 +30,11 @@ struct IngredientSelectionPage<Ingredient: BreadIngredient>: View {
         VStack(spacing: 16) {
             IngredientChoiceRow(ingredients: ingredients,
                                 isSelected: { selected == $0 }, choose: choose)
+           
             BreadActionButton(title: "التالي", action: next)
+                .disabled(selected == nil)
+                .opacity(selected == nil ? 0.5 : 1)
+
         }
     }
 }
@@ -88,7 +92,7 @@ struct ToppingsSelectionPage: View {
                                     isSelected: selectedVegetables.contains, choose: toggleVegetable)
             }
 
-            BreadActionButton(title: "انتهيت!", action: finish)
+            BreadActionButton(title: "خلصت وجبتي!", action: finish)
             .disabled(!canFinish)
             .opacity(canFinish ? 1 : 0.5)
         }

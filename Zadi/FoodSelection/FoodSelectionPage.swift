@@ -8,6 +8,7 @@ struct FoodSelectionPage: View {
     @State private var showsToast = false
     @State private var showsRice = false
     @State private var showsPancake = false
+    @State private var showsSnack = false
 
     var body: some View {
         page
@@ -20,36 +21,68 @@ struct FoodSelectionPage: View {
     // Each meal's back action clears its flag to show the menu again.
     @ViewBuilder
     private var page: some View {
+       
         if showsToast {
-            ToastView(character: character, returnToFoodSelection: { showsToast = false })
-        } else if showsPancake {
-            // The Pancake screen manages its character internally.
-            PancakePlateView()
-                .overlay(alignment: .topLeading) {
-                    CircleBackButton(label: Text("الرجوع لاختيار الوجبة")) {
-                        showsPancake = false
-                    }
-                    .padding(24)
+            ToastView(
+                character: character,
+                returnToFoodSelection: {
+                    showsToast = false
                 }
+            )
+
+        } else if showsPancake {
+            PancakePlateView(
+                character: character,
+                returnToFoodSelection: {
+                    showsPancake = false
+                }
+            )
+
+
+        } else if showsSnack {
+
+            SnackView(
+                character: character,
+                onFinish: {
+                    showsSnack = false
+                }
+            )
+            .overlay(alignment: .topLeading) {
+                CircleBackButton(
+                    label: Text("الرجوع لاختيار الوجبة")
+                ) {
+                    showsSnack = false
+                }
+                .padding(24)
+            }
+
         } else if showsRice {
             GeometryReader { geometry in
-                // Scale the Rice screen from its original canvas to fit the available space.
+
                 let canvas = CGSize(width: 1366, height: 1100)
-                let scale = min(geometry.size.width / canvas.width, geometry.size.height / canvas.height)
-                RiceMealView(character: character)
-                    .frame(width: canvas.width, height: canvas.height)
-                    .scaleEffect(scale)
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .clipped()
-                    .overlay(alignment: .topLeading) {
-                        CircleBackButton(label: Text("الرجوع لاختيار الوجبة")) {
-                            showsRice = false
-                        }
-                        .padding(24)
+                let scale = min(
+                    geometry.size.width / canvas.width,
+                    geometry.size.height / canvas.height
+                )
+
+                RiceMealView(
+                    character: character,
+                    returnToFoodSelection: {
+                        showsRice = false
                     }
+                )
+                .frame(width: canvas.width, height: canvas.height)
+                .scaleEffect(scale)
+                .frame(
+                    width: geometry.size.width,
+                    height: geometry.size.height
+                )
+                .clipped()
             }
             .ignoresSafeArea()
+
         } else {
+
             GeometryReader { geometry in
                 // Keep geometry-derived frames valid even during transient layout changes.
                 let width = geometry.size.width.isFinite ? max(0, geometry.size.width) : 0
@@ -88,7 +121,7 @@ struct FoodSelectionPage: View {
                                     showsPancake = true
                                 }
                                 FoodChoiceButton(title: Text("وجبات خفيفة"), image: "popcorn") {
-                                    // This meal will be connected when its screen is available.
+                                    showsSnack = true
                                 }
                                 FoodChoiceButton(title: Text("أرز"), image: "RiceBowl") {
                                     showsRice = true

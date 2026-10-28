@@ -1,33 +1,41 @@
 
 import SwiftUI
+import AVFoundation
 
 struct MissionView: View {
-    @Environment(\.dismiss) private var dismiss
-    // MARK: - Selected Character
+
+    // MARK: - Properties
     let character: String
-    
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var speechSynthesizer = AVSpeechSynthesizer()
+
+    // MARK: - Selected Character
     private var isGirl: Bool {
         character == "girl"
     }
-    
+
+    // MARK: - Character Image
     private var characterImage: String {
         isGirl ? "MissionGirl" : "MissionBoy"
     }
-    
+
+    // MARK: - Mission Text
     private var missionText: String {
         isGirl
-        ? "جاهزة نجهّز وجبتنا؟\nاختاري أكلة تفضّلينها"
-        : "جاهز نجهّز وجبتنا؟\nاختر أكلة تفضّلها"
+        ? "جاهزة نجهّز وجبتنا؟ اختاري أكلة تحبينها!"
+        : "جاهز نجهّز وجبتنا؟ اختر أكلة تحبها!"
     }
-    
+    // MARK: - Body
     var body: some View {
+
         GeometryReader { geometry in
-            
+
             let width = geometry.size.width
             let height = geometry.size.height
-            
+
             ZStack {
-                
+
                 // MARK: - Kitchen Background
                 Image("MissionKitchen")
                     .resizable()
@@ -35,6 +43,7 @@ struct MissionView: View {
                     .frame(width: width, height: height)
                     .ignoresSafeArea()
                     .clipped()
+
                 // MARK: - Character
                 Image(characterImage)
                     .resizable()
@@ -47,7 +56,7 @@ struct MissionView: View {
                         x: width * 0.25,
                         y: height * 0.65
                     )
-                
+
                 // MARK: - Speech Bubble Tail
                 Circle()
                     .fill(.white)
@@ -56,7 +65,7 @@ struct MissionView: View {
                         x: width * 0.48,
                         y: height * 0.48
                     )
-                
+
                 Circle()
                     .fill(.white)
                     .frame(width: width * 0.038)
@@ -64,9 +73,11 @@ struct MissionView: View {
                         x: width * 0.51,
                         y: height * 0.43
                     )
-                
+
+             
                 // MARK: - Speech Bubble
                 ZStack {
+
                     Ellipse()
                         .fill(.white)
                         .overlay {
@@ -81,40 +92,56 @@ struct MissionView: View {
                             radius: 6,
                             y: 3
                         )
-                    
-                    Text(missionText)
+
+                    VStack(spacing: height * 0.035) {
+
+                        Text(
+                            isGirl
+                            ? "جاهزة نجهّز وجبتنا؟"
+                            : "جاهز نجهّز وجبتنا؟"
+                        )
                         .font(.system(
-                            size: height * 0.043,
+                            size: height * 0.044,
                             weight: .bold
                         ))
-                        .foregroundStyle(
-                            Color(red: 0.65, green: 0.39, blue: 0.11)
+
+                        Text(
+                            isGirl
+                            ? "اختاري أكلة تحبينها!"
+                            : "اختر أكلة تحبها!"
                         )
-                        .multilineTextAlignment(.center)
-                        .minimumScaleFactor(0.8)
-                        .padding(24)
+                        .font(.system(
+                            size: height * 0.039,
+                            weight: .semibold
+                        ))
+                    }
+                    .foregroundStyle(
+                        Color(red: 0.65, green: 0.39, blue: 0.11)
+                    )
+                    .multilineTextAlignment(.center)
+                    .frame(width: width * 0.42)
                 }
                 .frame(
-                    width: width * 0.44,
-                    height: height * 0.30
+                    width: width * 0.50,
+                    height: height * 0.33
                 )
                 .position(
                     x: width * 0.70,
                     y: height * 0.28
                 )
-                
+
                 // MARK: - Start Mission Button
                 NavigationLink {
                     FoodSelectionPage(character: character)
                 } label: {
                     HStack(spacing: 10) {
-                        
+
                         Image(systemName: "hand.tap.fill")
                             .font(.system(size: height * 0.032))
                             .foregroundStyle(
                                 Color(red: 0.32, green: 0.39, blue: 0.70)
                             )
-                        
+
                         Text("لنبدأ")
                             .font(.system(
                                 size: height * 0.045,
@@ -123,16 +150,9 @@ struct MissionView: View {
                             .foregroundStyle(
                                 Color(red: 0.32, green: 0.39, blue: 0.70)
                             )
-                        
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: height * 0.03, weight: .bold))
-                            .foregroundStyle(
-                                Color(red: 0.32, green: 0.39, blue: 0.70)
-                            )
-                            .opacity(0.75)
                     }
                     .frame(
-                        width: width * 0.28,
+                        width: width * 0.22,
                         height: height * 0.12
                     )
                     .background(
@@ -152,41 +172,82 @@ struct MissionView: View {
                         y: 5
                     )
                 }
+                .buttonStyle(.plain)
                 .position(
-                    x: width * 0.73,
+                    x: width * 0.81,
                     y: height * 0.83
                 )
-                
-                
-                // MARK: - Back Button
-               Button {
-                   dismiss()
-               } label: {
-                   Image(systemName: "chevron.left")
-                       .font(.system(size: 22, weight: .bold))
-                       .foregroundStyle(
-                           Color(red: 0.30, green: 0.40, blue: 0.55)
-                       )
-                       .frame(width: 52, height: 52)
-                       .background(
-                           .white.opacity(0.85),
-                           in: Circle()
-                       )
-                       .shadow(
-                           color: .black.opacity(0.12),
-                           radius: 5,
-                           y: 3
-                       )
-               }
-               .buttonStyle(.plain)
-               .position(
-                   x: width * 0.055,
-                   y: height * 0.09
-               )
-               .zIndex(100)
-               .accessibilityLabel("الرجوع لاختيار الشخصية")
 
-           
+               
+
+            
+                // MARK: - Shared Back & Sound Buttons
+
+                ZadiTopControls(
+                    onBack: {},
+                    onSound: playMissionAudio,
+                    showsBackButton: false
+                )
+                .zIndex(100)
+                
+                // MARK: - Change Character Button
+                Button {
+                    speechSynthesizer.stopSpeaking(at: .immediate)
+                    dismiss()
+                } label: {
+
+                    HStack(spacing: 10) {
+
+                        Image(systemName: "arrow.left.arrow.right")
+                            .font(.system(
+                                size: height * 0.032,
+                                weight: .bold
+                            ))
+
+                        Text("تغيير الشخصية")
+                            .font(.system(
+                                size: height * 0.036,
+                                weight: .bold
+                            ))
+                    }
+                    .foregroundStyle(
+                        Color(
+                            red: 0.58,
+                            green: 0.37,
+                            blue: 0.18
+                        )
+                    )
+                    .frame(
+                        width: width * 0.25,
+                        height: height * 0.12
+                    )
+                    .background(
+                        Color(
+                            red: 1.0,
+                            green: 0.97,
+                            blue: 0.89
+                        ),
+                        in: Capsule()
+                    )
+                    .overlay {
+                        Capsule()
+                            .stroke(
+                                Color.brown.opacity(0.35),
+                                lineWidth: 2
+                            )
+                    }
+                    .shadow(
+                        color: .black.opacity(0.15),
+                        radius: 8,
+                        y: 5
+                    )
+                }
+                .buttonStyle(.plain)
+                .position(
+                    x: width * 0.55,
+                    y: height * 0.83
+                )
+
             } // End ZStack
             .frame(width: width, height: height)
             .clipped()
@@ -195,13 +256,43 @@ struct MissionView: View {
         .ignoresSafeArea()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
-
-        } // End body
-
-    } // End MissionView
-
-    #Preview(traits: .landscapeLeft) {
-        NavigationStack {
-            MissionView(character: "girl")
+        .onDisappear {
+            speechSynthesizer.stopSpeaking(at: .immediate)
         }
+
+    } // End body
+
+    // MARK: - Mission Audio
+    private func playMissionAudio() {
+
+        // Stop previous speech
+        speechSynthesizer.stopSpeaking(at: .immediate)
+
+        // Use the current character's mission text
+        let message = missionText.replacingOccurrences(
+            of: "\n",
+            with: " "
+        )
+
+        let utterance = AVSpeechUtterance(string: message)
+
+        // Arabic voice
+        utterance.voice =
+            AVSpeechSynthesisVoice(language: "ar-SA")
+            ?? AVSpeechSynthesisVoice(language: "ar")
+
+        // Speaking speed
+        utterance.rate = 0.45
+
+        // Start speaking
+        speechSynthesizer.speak(utterance)
     }
+
+} // End MissionView
+
+// MARK: - Preview
+#Preview(traits: .landscapeLeft) {
+    NavigationStack {
+        MissionView(character: "girl")
+    }
+}
