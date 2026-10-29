@@ -99,7 +99,7 @@ struct TaskView: View {
                         height: height * 0.52
                     )
                     .position(
-                        x: width * 0.22,
+                        x: width * 0.17,
                         y: height * 0.73
                     )
 
@@ -121,13 +121,28 @@ struct TaskView: View {
 
                         // Task Title
 
+                        Text("⭐ تحدّي اليوم ⭐")
+                            .font(.system(
+                                size: height * 0.027,
+                                weight: .bold,
+                                design: .rounded
+                            ))
+                            .foregroundStyle(
+                                Color(red: 0.85, green: 0.44, blue: 0.04)
+                            )
+
                         Text(taskTitle)
                             .font(.system(
-                                size: height * 0.045,
-                                weight: .bold
+                                size: height * 0.047,
+                                weight: .heavy,
+                                design: .rounded
                             ))
-                            .foregroundStyle(.black)
+                            .foregroundStyle(
+                                Color(red: 0.15, green: 0.22, blue: 0.37)
+                            )
                             .multilineTextAlignment(.center)
+                            .minimumScaleFactor(0.85)
+
 
                         // Task Description
 

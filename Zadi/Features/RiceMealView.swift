@@ -141,24 +141,7 @@ struct RiceMealView: View {
             
             // MARK: - Shared Back & Sound Buttons
             
-            ZadiTopControls(
-                onBack: {
-                    
-                    Speaker.shared.stop()
-                    
-                    if let returnToFoodSelection {
-                        returnToFoodSelection()
-                    } else {
-                        dismiss()
-                    }
-                },
-                
-                onSound: playRiceAudio
-            )
-            .zIndex(100)
             
-            .opacity(isCelebrating ? 0 : 1)
-            .allowsHitTesting(!isCelebrating)
             // MARK: - Rice Plate
             
             if let meal = mealImages[selected] {
@@ -177,7 +160,7 @@ struct RiceMealView: View {
             
             // MARK: - Food Selection Cards
             
-            HStack(spacing: 58) {
+            HStack(spacing: 44) {
                 
                 ForEach(foods, id: \.self) { food in
                     foodButton(food)
@@ -187,7 +170,7 @@ struct RiceMealView: View {
                 \.layoutDirection,
                  .leftToRight
             )
-            .position(x: 761, y: 853)
+            .position(x: 695, y: 853)
             .opacity(isCelebrating ? 0 : 1)
             .allowsHitTesting(!isCelebrating)
             
@@ -197,7 +180,8 @@ struct RiceMealView: View {
                 character: character,
                 message: message
             )
-            .position(x: 152, y: 897)
+            .scaleEffect(1.20)
+            .position(x: 90, y: 930)
             .opacity(isCelebrating ? 0 : 1)
             .allowsHitTesting(!isCelebrating)
             
@@ -223,7 +207,9 @@ struct RiceMealView: View {
                         isCelebrating = true
                     }
                 }
-                .position(x: 761, y: 1035)
+                
+                .scaleEffect(1.25)
+                .position(x: 1150, y: 1025)
                 .zIndex(20)
             }
             
@@ -333,14 +319,14 @@ struct RiceMealView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(
-                        width: 178,
-                        height: 137
+                        width: 145,
+                        height: 112
                     )
                 
                 Text(food.arabicName)
                     .font(
                         .system(
-                            size: 35,
+                            size: 28,
                             weight: .bold,
                             design: .rounded
                         )
@@ -353,8 +339,8 @@ struct RiceMealView: View {
                     )
             }
             .frame(
-                width: 198,
-                height: 221
+                width: 172,
+                height: 190
             )
             .background(
                 Color(
@@ -365,11 +351,11 @@ struct RiceMealView: View {
                 .opacity(0.92)
             )
             .clipShape(
-                RoundedRectangle(cornerRadius: 44)
+                RoundedRectangle(cornerRadius: 34)
             )
             .overlay {
                 
-                RoundedRectangle(cornerRadius: 44)
+                RoundedRectangle(cornerRadius: 34)
                     .stroke(
                         .white,
                         lineWidth: isSelected ? 5 : 0

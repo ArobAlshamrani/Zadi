@@ -16,7 +16,7 @@ struct IngredientChoiceRow<Ingredient: BreadIngredient>: View {
                 }
             }
         }
-    }
+        .scaleEffect(0.98)    }
 }
 
 // Spread and protein steps share their layout; ToastView owns their selections.
@@ -92,10 +92,16 @@ struct ToppingsSelectionPage: View {
                                     isSelected: selectedVegetables.contains, choose: toggleVegetable)
             }
 
-            BreadActionButton(title: "خلصت وجبتي!", action: finish)
+            
+            ZadiActionButton(
+                title: "إنهاء الوجبة",
+                icon: "checkmark.circle.fill",
+                action: finish
+            )
             .disabled(!canFinish)
             .opacity(canFinish ? 1 : 0.5)
-        }
+            .scaleEffect(0.94)
+            .offset(x: -350, y: 45)        }
     }
 }
 

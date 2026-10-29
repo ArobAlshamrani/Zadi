@@ -10,7 +10,7 @@ struct ZadiMealEndingScene: View {
     var mealArtwork: AnyView? = nil
     let onAnotherMeal: () -> Void
     let onStartTask: () -> Void
-
+    var isSnack = false
     @State private var appeared = false
 
     @Environment(\.accessibilityReduceMotion)
@@ -45,8 +45,7 @@ struct ZadiMealEndingScene: View {
                             design: .rounded
                         ))
 
-                    Text("وجبتك اللذيذة جاهزة!")
-                        .font(.system(
+                    Text(isSnack ? "سناكك اللذيذ جاهز!" : "وجبتك اللذيذة جاهزة!")                        .font(.system(
                             size: 36 * scale,
                             weight: .bold,
                             design: .rounded
@@ -144,38 +143,52 @@ struct ZadiMealEndingScene: View {
                
                 // MARK: - Ending Buttons
 
+             
                 HStack(spacing: 30 * scale) {
 
-                    // Choose another meal
-                    Button(action: onAnotherMeal) {
+                    if isSnack {
 
-                        Label(
-                            "اختيار وجبة أخرى",
-                            systemImage: "arrow.clockwise"
+                        // Snack: one Finish button only
+                        ZadiActionButton(
+                            title: "إنهاء",
+                            icon: "checkmark.circle.fill",
+                            action: onAnotherMeal
                         )
-                        .font(.system(
-                            size: 19,
-                            weight: .bold,
-                            design: .rounded
-                        ))
-                        .foregroundStyle(
-                            Color(red: 0.20, green: 0.30, blue: 0.45)
-                        )
-                        .frame(width: 224, height: 54)
-                        .background(
-                            Color.white,
-                            in: Capsule()
+
+                    } else {
+
+                        // Meals: choose another meal
+                        Button(action: onAnotherMeal) {
+
+                            Label(
+                                "اختيار وجبة أخرى",
+                                systemImage: "arrow.clockwise"
+                            )
+                            .font(.system(
+                                size: 19,
+                                weight: .bold,
+                                design: .rounded
+                            ))
+                            .foregroundStyle(
+                                Color(red: 0.20, green: 0.30, blue: 0.45)
+                            )
+                            .frame(width: 224, height: 54)
+                            .background(
+                                Color.white,
+                                in: Capsule()
+                            )
+                        }
+                        .buttonStyle(.plain)
+
+                        // Meals: go to the task
+                        ZadiActionButton(
+                            title: "يلا للمهمة!",
+                            icon: "star.fill",
+                            action: onStartTask
                         )
                     }
-                    .buttonStyle(.plain)
-
-                    // Go to the task
-                    ZadiActionButton(
-                        title: "يلا للمهمة!",
-                        icon: "star.fill",
-                        action: onStartTask
-                    )
                 }
+
                 .environment(\.layoutDirection, .leftToRight)
                 .scaleEffect(1.15 * scale)
                 .position(

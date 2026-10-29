@@ -77,16 +77,8 @@ struct ToastView: View {
                         choose: chooseBase
                     )
 
-                    ZadiActionButton(
-                        title: "التالي",
-                        action: advance
-                    )
-                    .disabled(selectedBase == nil)
-                    .opacity(selectedBase == nil ? 0.5 : 1)
+                   
 
-                    if canFinish {
-                        finishButton
-                    }
                 }
 
             // MARK: - Step 2: Protein
@@ -100,16 +92,9 @@ struct ToastView: View {
                         choose: chooseProtein
                     )
 
-                    ZadiActionButton(
-                        title: "التالي",
-                        action: advance
-                    )
-                    .disabled(selectedProtein == nil)
-                    .opacity(selectedProtein == nil ? 0.5 : 1)
+                  
 
-                    if canFinish {
-                        finishButton
-                    }
+
                 }
 
             // MARK: - Step 3: Toppings
@@ -157,6 +142,26 @@ struct ToastView: View {
             }
 
             // MARK: - Celebration Stars
+        
+        .overlay {
+            if step == .protein {
+                GeometryReader { geometry in
+                    ZadiActionButton(
+                        title: " خلصت وجبتي",
+                        icon: "checkmark.circle.fill",
+                        action: finishMeal
+                    )
+                    .disabled(selectedProtein == nil)
+                    .opacity(selectedProtein == nil ? 0.5 : 1)
+                    .scaleEffect(0.94)
+                    .position(
+                        x: geometry.size.width * 0.80,
+                        y: geometry.size.height * 0.93
+                    )
+                }
+            }
+        }
+
             .overlay {
 
             if step == .finished {
@@ -293,7 +298,8 @@ struct ToastView: View {
         private var finishButton: some View {
 
         ZadiActionButton(
-            title: "خلصت وجبتي!",            icon: "checkmark.circle.fill",
+            title: "خلصت وجبتي!",
+            icon: "checkmark.circle.fill",
             action: finishMeal
         )
     }
@@ -463,12 +469,14 @@ struct ToastView: View {
         }
 
         // Chocolate skips the protein step.
-        if selectedBase == .chocolate {
-            withAnimation(popupAnimation) {
-                step = .toppings
-            }
-        }
-    }
+        
+        guard let selectedBase else { return }
+
+        withAnimation(popupAnimation) {
+            step = selectedBase == .chocolate
+                ? .toppings
+                : .protein
+        }    }
 
     // MARK: - Choose Protein
     private func chooseProtein(_ protein: ToastProtein) {
@@ -536,17 +544,31 @@ struct ToastView: View {
 
         switch step {
 
+       
         case .protein:
             withAnimation(popupAnimation) {
+                selectedBase = nil
+                selectedProtein = nil
+                selectedFruits.removeAll()
+                selectedVegetables.removeAll()
                 step = .base
             }
 
         case .toppings:
             withAnimation(popupAnimation) {
-                step = selectedBase == .chocolate
-                    ? .base
-                    : .protein
+                selectedFruits.removeAll()
+                selectedVegetables.removeAll()
+
+                if selectedBase == .chocolate {
+                    selectedBase = nil
+                    selectedProtein = nil
+                    step = .base
+                } else {
+                    selectedProtein = nil
+                    step = .protein
+                }
             }
+
 
         case .base:
             if let returnToFoodSelection {
