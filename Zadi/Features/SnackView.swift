@@ -1,6 +1,6 @@
 
 import SwiftUI
-
+import AVFoundation
 // ONE view for the whole snack section.
 // Stage 1: choose a snack  ->  Stage 2: snack on the placemat + suggestion card
 // ->  Stage 3: combined food on the placemat + finish button.
@@ -9,6 +9,7 @@ struct SnackView: View {
     // MARK: - Settings from the rest of the app (both optional)
     var character = "boy"                 // "boy" or "girl" (CharacterCoach images)
     var onFinish: (() -> Void)? = nil     // runs when the child taps "انهاء الوجبة"
+    var onBackToMeals: (() -> Void)? = nil
 
     // MARK: - Data (edit pictures and labels here only)
     struct Snack: Identifiable {
@@ -49,8 +50,9 @@ struct SnackView: View {
     // MARK: - State
     @State private var selected: Snack?        // nil = Stage 1
     @State private var addedAddition = false   // true = Stage 3
-
-    // 1, 2 or 3 (used only to animate between stages)
+    @State private var isShowingEnding = false
+    @State private var returnToMealsAfterEnding = false
+    @State private var snackSpeech = AVSpeechSynthesizer()    // 1, 2 or 3 (used only to animate between stages)
     private var stage: Int { selected == nil ? 1 : (addedAddition ? 3 : 2) }
 
     // MARK: - Screen
@@ -66,11 +68,36 @@ struct SnackView: View {
                     .frame(width: size.width, height: size.height)
                     .clipped()
 
+                
                 if let snack = selected {
-                    chosenStage(snack, size: size)      // Stages 2 and 3
+
+                    chosenStage(snack, size: size)
+
                 } else {
-                    choicesGrid(size: size)             // Stage 1
+
+                    // Snack selection cards
+                    choicesGrid(size: size)
+
+                    // Character on the first screen
+                    Image("\(character)_thinking")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: size.height * 0.30)
+                        .position(
+                            x: size.width * 0.15,
+                            y: size.height * 0.85
+                        )
+                        .allowsHitTesting(false)
+
                 }
+                
+                ZadiTopControls(
+                    onBack: goBackFromSnack,
+                    onSound: playSnackAudio
+                )
+                .zIndex(100)
+
+
             }
             .frame(width: size.width, height: size.height)
             .animation(.easeInOut(duration: 0.3), value: stage)
@@ -78,24 +105,122 @@ struct SnackView: View {
         .ignoresSafeArea()
         // Positions stay fixed; Arabic text still reads right-to-left by itself.
         .environment(\.layoutDirection, .leftToRight)
+        
+        .fullScreenCover(
+            isPresented: $isShowingEnding,
+            onDismiss: {
+                if returnToMealsAfterEnding {
+
+                    returnToMealsAfterEnding = false
+                    selected = nil
+                    addedAddition = false
+
+                    onFinish?()
+                }
+            }
+        ) {
+            if let snack = selected {
+
+                ZadiMealEndingScene(
+                    character: character,
+                    mealImage: snack.combinedImage,
+                    onAnotherMeal: {
+                        returnToMealsAfterEnding = true
+                        isShowingEnding = false
+                    },
+                    onStartTask: {},
+                    isSnack: true
+                )
+            }
+        }
+
     }
+    
+    // MARK: - Shared Back Button
+    private func goBackFromSnack() {
+
+        snackSpeech.stopSpeaking(at: .immediate)
+
+        if selected != nil {
+            selected = nil
+            addedAddition = false
+        } else {
+            if let onBackToMeals {
+                onBackToMeals()
+            } else {
+                onFinish?()
+            }
+        }
+    }
+
+    // MARK: - Snack Instructions Audio
+    private func playSnackAudio() {
+
+        if snackSpeech.isSpeaking {
+            snackSpeech.stopSpeaking(at: .immediate)
+            return
+        }
+
+        let instructions: String
+
+        if selected == nil {
+            instructions = character == "girl"
+                ? "اختاري وجبة خفيفة تحبينها."
+                : "اختر وجبة خفيفة تحبها."
+        } else if addedAddition {
+            instructions = praiseText
+        } else {
+            instructions = thinkingText
+        }
+
+        let utterance = AVSpeechUtterance(string: instructions)
+        utterance.voice = AVSpeechSynthesisVoice(language: "ar-SA")
+        utterance.rate = 0.45
+
+        snackSpeech.speak(utterance)
+    }
+
 
     // MARK: - Stage 1: five cards (3 on top, 2 centered below)
     private func choicesGrid(size: CGSize) -> some View {
-        // Sizes are fractions of the screen height, measured from your design.
-        let cardWidth = size.height * 0.169
-        let cardHeight = size.height * 0.193
 
-        return VStack(spacing: size.height * 0.0195) {
-            cardRow(Array(Self.snacks.prefix(3)), gap: size.height * 0.0447,
-                    cardWidth: cardWidth, cardHeight: cardHeight)
-            cardRow(Array(Self.snacks.suffix(2)), gap: size.height * 0.0725,
-                    cardWidth: cardWidth, cardHeight: cardHeight)
+        let gap = min(18, size.width * 0.015)
+
+        let availableWidth = size.width * 0.66
+
+        let cardWidth = min(
+            size.height * 0.16,
+            (availableWidth - gap * 4) / 5
+        )
+
+        let cardHeight = size.height * 0.18
+
+        return VStack(spacing: size.height * 0.02) {
+
+            // Top row: Apple and Candy
+            cardRow(
+                Array(Self.snacks.prefix(2)),
+                gap: gap,
+                cardWidth: cardWidth,
+                cardHeight: cardHeight
+            )
+
+            // Bottom row: Chips, Cookies and Popcorn
+            cardRow(
+                Array(Self.snacks.dropFirst(2)),
+                gap: gap,
+                cardWidth: cardWidth,
+                cardHeight: cardHeight
+            )
         }
-        // TUNE: moves the whole grid (fractions of screen width / height)
-        .position(x: size.width * 0.5, y: size.height * 0.777)
+        .position(
+            x: size.width * 0.50,
+            y: size.height * 0.77
+        )
         .transition(.opacity)
     }
+
+
 
     private func cardRow(_ items: [Snack], gap: CGFloat,
                          cardWidth: CGFloat, cardHeight: CGFloat) -> some View {
@@ -132,10 +257,14 @@ struct SnackView: View {
             Button {
                 addedAddition = true
             } label: {
-                card(image: snack.additionImage, title: snack.additionTitle,
-                     width: size.height * 0.2, height: size.height * 0.228)
+                card(
+                    image: snack.additionImage,
+                    title: snack.additionTitle,
+                    width: size.height * 0.16,
+                    height: size.height * 0.18
+                )
             }
-            .buttonStyle(PressStyle(cornerRadius: size.height * 0.2 * 0.24))
+            .buttonStyle(PressStyle(cornerRadius: size.height * 0.16 * 0.24))
             .disabled(addedAddition)
             .position(x: size.width * 0.5, y: size.height * 0.79)
 
@@ -163,41 +292,24 @@ struct SnackView: View {
                 .position(x: size.width * 0.254, y: size.height * 0.705)
 
             // Finish button (Stage 3 only)
-            if addedAddition {
-                Button {
-                    onFinish?()
-                    selected = nil              // back to Stage 1
-                    addedAddition = false
-                } label: {
-                    Text("إنهاء الوجبة")
-                        .font(.system(size: size.height * 0.035, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, size.width * 0.03)
-                        .padding(.vertical, size.height * 0.015)
-                        .background(Capsule().fill(Color(red: 0.42, green: 0.7, blue: 0.38)))
-                        .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
-                }
-                .buttonStyle(PressStyle(cornerRadius: size.height * 0.05))
-                .position(x: size.width * 0.87, y: size.height * 0.89)
-                .transition(.opacity)
-            }
+                if addedAddition {
 
-            // Back button (not in your design): lets the child change their mind.
-            // Delete this whole Button if you don't want it.
-            Button {
-                selected = nil
-                addedAddition = false
-            } label: {
-                Image(systemName: "chevron.backward")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(Color(red: 0.2, green: 0.4, blue: 0.75))
-                    .frame(width: 52, height: 52)
-                    .background(Circle().fill(.white))
-                    .shadow(radius: 3, y: 2)
-            }
-            .buttonStyle(PressStyle(cornerRadius: 26))
-            .accessibilityLabel("رجوع")
-            .position(x: size.width * 0.08, y: size.height * 0.27)
+                    ZadiActionButton(
+                        title: "خلصت وجبتي!",
+                        icon: "checkmark.circle.fill"
+                    ) {
+                        isShowingEnding = true
+                    }
+                    .position(
+                        x: size.width * 0.87,
+                        y: size.height * 0.89
+                    )
+                    .transition(.opacity)
+
+                }
+
+
+          
         }
         .transition(.opacity)
     }

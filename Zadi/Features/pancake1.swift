@@ -167,20 +167,19 @@ struct PancakePlateView: View {
                             toggleTopping(topping)
                         } label: {
 
-                            VStack(spacing: 8 * scale) {
-
+                            VStack(spacing: 2 * scale) {
                                 Image(topping.cardImage)
                                     .resizable()
                                     .scaledToFit()
+                                    
                                     .frame(
-                                        width: 75 * scale,
-                                        height: 70 * scale
+                                        width: 105 * scale,
+                                        height: 90 * scale
                                     )
-
                                 Text(topping.title)
                                     .font(
                                         .system(
-                                            size: 17 * scale,
+                                            size: 21 * scale,
                                             weight: .bold
                                         )
                                     )
@@ -194,10 +193,16 @@ struct PancakePlateView: View {
                             }
                             .frame(
                                 width: 130 * scale,
-                                height: 135 * scale
+                                height: 145 * scale
                             )
-                            .background(Color.white)
-                            .clipShape(
+                            .background(
+                                Color(
+                                    red: 0.74,
+                                    green: 0.74,
+                                    blue: 0.77
+                                )
+                                .opacity(0.92)
+                            )                            .clipShape(
                                 RoundedRectangle(
                                     cornerRadius: 25 * scale
                                 )
@@ -267,7 +272,7 @@ struct PancakePlateView: View {
                     if !selectedToppings.isEmpty && !isCelebrating {
 
                         ZadiActionButton(
-                            title: "خلصت وجبتي!",
+                            title: "خلصت وجبتي",
                             icon: "checkmark.circle.fill"
                         ) {
                             Speaker.shared.stop()
@@ -278,8 +283,8 @@ struct PancakePlateView: View {
                         }
                         .scaleEffect(scale)
                         .position(
-                            x: w * 0.50,
-                            y: h * 0.90
+                            x: w * 0.80,
+                            y: h * 0.93
                         )
                     }
 

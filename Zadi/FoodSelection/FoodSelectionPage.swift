@@ -39,24 +39,22 @@ struct FoodSelectionPage: View {
             )
 
 
+        
         } else if showsSnack {
 
             SnackView(
                 character: character,
                 onFinish: {
                     showsSnack = false
-                }
-            )
-            .overlay(alignment: .topLeading) {
-                CircleBackButton(
-                    label: Text("الرجوع لاختيار الوجبة")
-                ) {
+                },
+                onBackToMeals: {
                     showsSnack = false
                 }
-                .padding(24)
-            }
+            )
 
         } else if showsRice {
+
+
             GeometryReader { geometry in
 
                 let canvas = CGSize(width: 1366, height: 1100)
@@ -78,6 +76,23 @@ struct FoodSelectionPage: View {
                     height: geometry.size.height
                 )
                 .clipped()
+
+                .overlay {
+                    ZadiTopControls(
+                        onBack: {
+                            Speaker.shared.stop()
+                            showsRice = false
+                        },
+                        onSound: {
+                            Speaker.shared.say(
+                                character == "girl"
+                                ? "اختاري مع الرز الإضافة التي تحبينها. يمكنك اختيار الدجاج أو الزبادي أو السلطة أو البطاطس."
+                                : "اختر مع الرز الإضافة التي تحبها. يمكنك اختيار الدجاج أو الزبادي أو السلطة أو البطاطس."
+                            )
+                        }
+                    )
+                }
+
             }
             .ignoresSafeArea()
 
@@ -136,13 +151,21 @@ struct FoodSelectionPage: View {
                     .position(x: width * 0.5, y: height * 0.785)
                 }
                 .frame(width: width, height: height)
-                .overlay(alignment: .topLeading) {
-                    CircleBackButton(label: Text("الرجوع لنبدأ")) {
-                        // Leave the meal menu and return to the Mission screen.
-                        dismiss()
-                    }
-                    .padding(.leading, max(geometry.safeAreaInsets.leading + 8, width * 0.055 - 26))
-                    .padding(.top, max(geometry.safeAreaInsets.top + 8, height * 0.09 - 26))
+                .overlay {
+                    ZadiTopControls(
+                        onBack: {
+                            Speaker.shared.stop()
+                            dismiss()
+                        },
+                        onSound: {
+                            Speaker.shared.say(
+                                character == "girl"
+                                ? "اختاري الوجبة التي تحبينها، ولنبدأ بتحضيرها!"
+                                : "اختر الوجبة التي تحبها، ولنبدأ بتحضيرها!"
+                            )
+                        }
+                    )
+                    .zIndex(100)
                 }
             }
             .ignoresSafeArea()
