@@ -12,6 +12,8 @@ struct ZadiMealEndingScene: View {
     let onStartTask: () -> Void
     var isSnack = false
     @State private var appeared = false
+    @State private var hasPlayedFinishedVoice = false
+    @Environment(\.scenePhase) private var scenePhase
 
     @Environment(\.accessibilityReduceMotion)
     private var reduceMotion
@@ -66,22 +68,20 @@ struct ZadiMealEndingScene: View {
 
                 // MARK: - Happy Character
 
-                Image(character == "girl" ? "EndingGirl" : "EndingBoy")                    .resizable()
+                Image(character == "girl" ? "EndingGirl" : "EndingBoy")
+                    .resizable()
                     .scaledToFit()
                     .frame(
                         width: 350 * scale,
                         height: 365 * scale
                     )
-                    .offset(
-                        y: appeared ? 0 : 40 * scale
-                    )
+                    .offset(y: appeared ? 0 : 40 * scale)
                     .opacity(appeared ? 1 : 0)
                     .position(
                         x: w * 0.5,
                         y: h * 0.51
                     )
 
-             
                 // MARK: - Zadi Plate and Selected Meal
 
                 ZStack {
@@ -150,7 +150,7 @@ struct ZadiMealEndingScene: View {
 
                         // Snack: one Finish button only
                         ZadiActionButton(
-                            title: "إنهاء",
+                            title: "اختيار وجبة أخرى",
                             icon: "checkmark.circle.fill",
                             action: onAnotherMeal
                         )
@@ -202,7 +202,20 @@ struct ZadiMealEndingScene: View {
         }
         .ignoresSafeArea()
         .statusBarHidden()
+        .onDisappear { Coach.stopVoice() }
+        .onChange(of: scenePhase) {
+            if scenePhase != .active {
+                Coach.stopVoice()
+            }
+        }
         .onAppear {
+            if !hasPlayedFinishedVoice {
+                hasPlayedFinishedVoice = true
+                IngredientVoice.shared.play(
+                    .interactionFinished,
+                    character: character == "girl" ? .girl : .boy
+                )
+            }
 
             if reduceMotion {
                 appeared = true

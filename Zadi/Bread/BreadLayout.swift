@@ -36,7 +36,10 @@ struct ToastPageLayout<Sandwich: View, Content: View>: View {
             let sandwichSize = (isPortrait
                 ? min(width * 0.75, height * 0.40)
                 : min(width * 0.34, height * 0.52)) * 0.75
-            let buttonWidth = min(140, max(44, (width - 68) / 3))
+            let cardStyle = FoodLayoutStyle.responsive(to: geometry.size)
+            let cardWorkspaceWidth = FoodLayoutStyle.workspaceWidth(for: geometry.size)
+            let buttonWidth = cardStyle.cardWidth
+            // I previously used let buttonWidth = min(140, max(44, (width - 68) / 3)).
             // The plate center is at y = 250 in the 1194 x 834 background.
             // Match the background's fill scale so the toast stays on the plate when cropped.
             let backgroundScale = max(width / 1194, height / 834)
@@ -54,24 +57,41 @@ struct ToastPageLayout<Sandwich: View, Content: View>: View {
                     // The toast is only a preview, so it should not intercept taps.
                     .allowsHitTesting(false)
 
-                VStack(spacing: 12) {
-                    Spacer()
-                    content(buttonWidth)
-                        .environment(\.layoutDirection, .rightToLeft)
-                    Spacer()
-                        .frame(height: height * 0.075)
-                }
-                .frame(width: width, height: height)
-                .position(x: width * 0.5, y: height * 0.5)
+                // I give every step the same workspace and shared card sizes.
+                // I size the cards once, rather than scaling the entire row a second time.
+                content(buttonWidth)
+                    .environment(\.foodLayoutStyle, cardStyle)
+                    .environment(\.layoutDirection, .rightToLeft)
+                    .frame(width: cardWorkspaceWidth)
+                    .position(x: width * 0.5, y: height * FoodLayoutStyle.rowCenterFraction)
+                // I keep my previous scaling here for reference.
+    //                 // I place every ingredient row at Pancake's height, independently of Next or Finish.
+    //                 // I scale the cards for larger iPads without shrinking them on the mini.
+    //                 content(buttonWidth)
+    //                     .environment(\.layoutDirection, .rightToLeft)
+    //                     .scaleEffect(max(1, min(width / 1194, height / 834)))
+    //                     .position(x: width * 0.5, y: height * 0.75)
+                // I keep my previous row layout here for reference.
+                // VStack(spacing: 12) {
+                // Spacer()
+                // content(buttonWidth)
+                // .environment(\.layoutDirection, .rightToLeft)
+                // Spacer()
+                // .frame(height: height * 0.075)
+                // }
+                // .frame(width: width, height: height)
+                // .position(x: width * 0.5, y: height * 0.5)
 
-                if showsBackButton {
-                    CircleBackButton(label: Text(backLabel), action: goBack)
-                        .position(
-                            x: max(geometry.safeAreaInsets.leading + 34, width * 0.055),
-                            y: max(geometry.safeAreaInsets.top + 34, height * 0.09)
-                        )
-                        .zIndex(100)
-                }
+                // ToastView supplies ZadiTopControls and always disabled this older Back button.
+                // Previous unused Back-button branch:
+//                 if showsBackButton {
+//                     CircleBackButton(label: Text(backLabel), action: goBack)
+//                         .position(
+//                             x: max(geometry.safeAreaInsets.leading + 34, width * 0.055),
+//                             y: max(geometry.safeAreaInsets.top + 34, height * 0.09)
+//                         )
+//                         .zIndex(100)
+//                 }
             }
             .frame(width: width, height: height)
         }
@@ -180,3 +200,23 @@ struct SandwichView: View {
     ToastView(character: "boy")
         .environment(\.layoutDirection, .rightToLeft)
 }
+
+// MARK: - Removed Back Button Helper (Reference Only)
+// Bread uses ZadiTopControls for its visible Back and Listen buttons.
+// struct CircleBackButton: View {
+//     let label: Text
+//     let action: () -> Void
+//     
+//     var body: some View {
+//         Button(action: action) {
+//             Image(systemName: "chevron.left")
+//                 .font(.system(size: 22, weight: .bold))
+//                 .foregroundStyle(Color(red: 0.30, green: 0.40, blue: 0.55))
+//                 .frame(width: 52, height: 52)
+//                 .background(.white.opacity(0.85), in: Circle())
+//                 .shadow(color: .black.opacity(0.12), radius: 5, y: 3)
+//         }
+//         .buttonStyle(.plain)
+//         .accessibilityLabel(label)
+//     }
+// }

@@ -1,7 +1,11 @@
 
 import SwiftUI
 
-// MARK: - Shared Back & Sound Buttons
+// Shared page controls: Back/Listen, action-button appearance, and Next/Finish placement.
+// Pages supply the actions; these components control how the buttons look and where they appear.
+
+// MARK: - Shared Back and Listen Controls
+// Both controls scale with the available height. Back can be hidden when a page does not need it.
 struct ZadiTopControls: View {
 
     let onBack: () -> Void
@@ -33,10 +37,10 @@ struct ZadiTopControls: View {
                 }
 
 
-                // MARK: - Sound Button
+                // MARK: - Listen Button
                 ZadiCircleButton(
                     icon: "speaker.wave.2.fill",
-                    label: "استمع إلى التعليمات",
+                    label: "إعادة تشغيل آخر تسجيل",
                     size: buttonSize,
                     action: onSound
                 )
@@ -51,6 +55,7 @@ struct ZadiTopControls: View {
 }
 
 // MARK: - Reusable Circle Button
+// Draw the same circular style for Back and Listen, with a readable accessibility label.
 private struct ZadiCircleButton: View {
 
     let icon: String
@@ -80,6 +85,7 @@ private struct ZadiCircleButton: View {
 }
 
 // MARK: - Shared Action Button
+// Draw a green 224-by-54-point button. The containing view decides its position.
 
 struct ZadiActionButton: View {
 
@@ -114,6 +120,8 @@ struct ZadiActionButton: View {
 }
 
 // MARK: - Shared Meal Celebration Card
+// Display a character, congratulatory message, and task button together.
+// This card is separate from the full-screen ZadiMealEndingScene.
 
 struct ZadiMealCelebrationCard: View {
 
@@ -205,4 +213,51 @@ struct ZadiMealCelebrationCard: View {
            }
        }
    }
+}
+
+// MARK: - Food Page Next and Finish Positioning
+// Each food page supplies its own button, completion conditions, and action.
+// Place this region in an overlay so showing a button does not move the ingredient cards.
+struct FoodActionRegion<Content: View>: View {
+    private let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        GeometryReader { geometry in
+            // Scale up on larger screens, while keeping the button at least its original size.
+            let scale = max(1, min(geometry.size.width / 1194, geometry.size.height / 834))
+            let halfWidth = 112 * scale
+            let halfHeight = 27 * scale
+
+            ZStack {
+                content
+            }
+            .frame(width: 224, height: 54)
+            .scaleEffect(scale)
+            // Position Next and Finish in the same bottom-right area.
+            // Limit the center position to leave at least 24 points at the right and bottom edges.
+            .position(
+                x: min(geometry.size.width * 0.80, geometry.size.width - halfWidth - 24),
+                y: min(geometry.size.height * 0.90, geometry.size.height - halfHeight - 24)
+            )
+        }
+        .environment(\.layoutDirection, .leftToRight)
+        // Previous layout preserved for reference; the following code is inactive.
+        // // Reserve a slot matching ZadiActionButton's 224-by-54-point size.
+        // // The slot stays the same even when the page has no action to show.
+        // ZStack {
+        // content
+        // }
+        // .frame(width: 224, height: 54)
+        // .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        // .padding(.trailing, 24)
+        // .padding(.bottom, 24)
+        // // Keep the region inside the parent's safe area.
+        // // Keep the action on the right regardless of the text direction.
+        // .environment(\.layoutDirection, .leftToRight)
+        // // Keep the empty area transparent.
+    }
 }

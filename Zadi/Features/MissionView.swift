@@ -1,6 +1,5 @@
 
 import SwiftUI
-import AVFoundation
 
 struct MissionView: View {
 
@@ -8,7 +7,7 @@ struct MissionView: View {
     let character: String
 
     @Environment(\.dismiss) private var dismiss
-    @State private var speechSynthesizer = AVSpeechSynthesizer()
+    @Environment(\.scenePhase) private var scenePhase
 
     // MARK: - Selected Character
     private var isGirl: Bool {
@@ -192,7 +191,7 @@ struct MissionView: View {
                 
                 // MARK: - Change Character Button
                 Button {
-                    speechSynthesizer.stopSpeaking(at: .immediate)
+                    Coach.stopVoice()
                     dismiss()
                 } label: {
 
@@ -256,36 +255,22 @@ struct MissionView: View {
         .ignoresSafeArea()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        // Play the selected character's mission recording whenever this page opens.
+        .onAppear { playMissionAudio() }
         .onDisappear {
-            speechSynthesizer.stopSpeaking(at: .immediate)
+            Coach.stopVoice()
+        }
+        .onChange(of: scenePhase) {
+            if scenePhase != .active { Coach.stopVoice() }
         }
 
     } // End body
 
     // MARK: - Mission Audio
     private func playMissionAudio() {
-
-        // Stop previous speech
-        speechSynthesizer.stopSpeaking(at: .immediate)
-
-        // Use the current character's mission text
-        let message = missionText.replacingOccurrences(
-            of: "\n",
-            with: " "
-        )
-
-        let utterance = AVSpeechUtterance(string: message)
-
-        // Arabic voice
-        utterance.voice =
-            AVSpeechSynthesisVoice(language: "ar-SA")
-            ?? AVSpeechSynthesisVoice(language: "ar")
-
-        // Speaking speed
-        utterance.rate = 0.45
-
-        // Start speaking
-        speechSynthesizer.speak(utterance)
+        IngredientVoice.shared.play(.mission, character: isGirl ? .girl : .boy)
+        // Previous speaker behavior:
+        // IngredientVoice.shared.replayLast()
     }
 
 } // End MissionView
