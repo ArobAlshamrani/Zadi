@@ -270,11 +270,28 @@ extension IngredientBenefit {
 }
 
 extension IngredientBenefit {
+    private var recording: IngredientVoice.Recording {
+        switch self {
+        case .chocolate: return .breadChocolate
+        case .cheese: return .breadCheese
+        case .egg: return .breadEgg
+        case .chicken: return .breadChicken
+        case .turkey: return .breadTurkey
+        case .lettuce: return .breadLettuce
+        case .tomato: return .breadTomato
+        case .cucumber: return .breadCucumber
+        case .banana: return .breadBanana
+        case .strawberry: return .breadStrawberry
+        case .apple: return .breadApple
+        }
+    }
+
     func coachReaction(added: Bool, selected: [Food]) -> CoachMessage? {
         // Chocolate uses the thinking face to encourage adding fruit.
         // Each other ingredient uses its own expression from addedReaction.
         guard !added else {
-            return CoachMessage(mood: addedReaction.mood, text: addedReaction.text, voice: "")
+            return CoachMessage(mood: addedReaction.mood, text: addedReaction.text,
+                                voice: "", recording: recording)
         }
         // Removals keep the shared Coach rules, but never declare the recipe complete.
         let reaction = Coach.react(to: coachFood, added: false, selected: selected)

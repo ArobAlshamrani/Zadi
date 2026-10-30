@@ -1,6 +1,5 @@
 
 import SwiftUI
-import AVFoundation
 
 // MARK: - Toast Meal
 struct ToastView: View {
@@ -15,7 +14,6 @@ struct ToastView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var goToTask = false
-    @State private var speechSynthesizer = AVSpeechSynthesizer()
     @State private var coachMessage: CoachMessage?
 
     @State private var selectedBase: ToastBase?
@@ -24,18 +22,26 @@ struct ToastView: View {
     @State private var selectedFruits: Set<ToastFruit> = []
     @State private var step: ToastStep = .base
 
-    @State private var activeBenefit: IngredientBenefit?
-    @State private var ingredientAudio: IngredientAudio?
     @State private var isCelebrating = false
     @State private var returnToMealMenuAfterDismiss = false
 
-    // Finish is available after the first ingredient.
+    // only allow finishing on the final fruit or vegetable step.
     private var canFinish: Bool {
-        selectedBase != nil ||
-        selectedProtein != nil ||
-        !selectedVegetables.isEmpty ||
-        !selectedFruits.isEmpty
+        guard step == .toppings else { return false }
+        // allow finishing with either spread because protein is optional.
+        return selectedBase == .chocolate || selectedBase == .cheese
+        // I keep my previous code here for reference.
+        // return selectedBase == .chocolate ||
+        //     (selectedBase == .cheese && selectedProtein != nil)
     }
+    // I keep my previous code here for reference.
+    // // Finish is available after the first ingredient.
+    // private var canFinish: Bool {
+    //     selectedBase != nil ||
+    //     selectedProtein != nil ||
+    //     !selectedVegetables.isEmpty ||
+    //     !selectedFruits.isEmpty
+    // }
 
     private var backLabel: String {
         step == .toppings && selectedBase != .chocolate
@@ -144,23 +150,53 @@ struct ToastView: View {
             // MARK: - Celebration Stars
         
         .overlay {
-            if step == .protein {
-                GeometryReader { geometry in
+            // share one safe-area action slot without moving the ingredient row.
+            FoodActionRegion {
+                if step == .protein {
                     ZadiActionButton(
-                        title: " خلصت وجبتي",
+                        title: "التالي",
+                        icon: "arrow.right",
+                        action: advance
+                    )
+                } else if step == .toppings {
+                    ZadiActionButton(
+                        title: "خلصت وجبتي",
                         icon: "checkmark.circle.fill",
                         action: finishMeal
                     )
-                    .disabled(selectedProtein == nil)
-                    .opacity(selectedProtein == nil ? 0.5 : 1)
-                    .scaleEffect(0.94)
-                    .position(
-                        x: geometry.size.width * 0.80,
-                        y: geometry.size.height * 0.93
-                    )
+                    .disabled(!canFinish)
+                    .opacity(canFinish ? 1 : 0.5)
                 }
             }
         }
+        //keep previous implementation here for reference.
+        //         .overlay {
+        //             if step == .protein {
+        //                 GeometryReader { geometry in
+        //                     // I let the child change protein before pressing Next.
+        //                     ZadiActionButton(
+        //                         title: "التالي",
+        //                         icon: "arrow.left",
+        //                         action: advance
+        //                     )
+        //                     // I keep my previous code here for reference.
+        //                     // ZadiActionButton(
+        //                     //     title: " خلصت وجبتي",
+        //                     //     icon: "checkmark.circle.fill",
+        //                     //     action: finishMeal
+        //                     // )
+        //                     // I leave Next enabled so the child can skip protein.
+        //                     // I keep my previous code here for reference.
+        //                     // .disabled(selectedProtein == nil)
+        //                     // .opacity(selectedProtein == nil ? 0.5 : 1)
+        //                     .scaleEffect(0.94)
+        //                     .position(
+        //                         x: geometry.size.width * 0.80,
+        //                         y: geometry.size.height * 0.93
+        //                     )
+        //                 }
+        //             }
+        //         }
 
             .overlay {
 
@@ -178,50 +214,36 @@ struct ToastView: View {
                     onBack: goBack,
                     onSound: playToastAudio
                 )
+                // I use the full page for these controls, just like Pancake.
+                // This makes them larger and lifts them without moving my character.
+                .ignoresSafeArea()
+                // I previously left these controls inside the smaller safe-area overlay.
             }
         }
 
         // MARK: - Character Reactions
         .overlay {
-            if let coachMessage, step != .finished {
-
-                GeometryReader { geometry in
-
-                    let scale = min(
-                        geometry.size.width / 1194,
-                        geometry.size.height / 834
-                    )
-
-                    CharacterView(
-                        character: character,
-                        message: coachMessage
-                    )
-                    .scaleEffect(scale)
-                    .position(
-                        x: geometry.size.width * 0.14,
-                        y: geometry.size.height * 0.87
-                    )
-                }
-                .ignoresSafeArea()
-                .allowsHitTesting(false)
+            if step != .finished {
+                // Bread opts in without changing other screens that share this view.
+                CharacterPresentation(character: character, message: coachMessage,
+                                      foodLayoutStyle: .bread)
+                // Previous presentation before visible-artwork alignment:
+                // CharacterPresentation(character: character, message: coachMessage)
             }
         }
 
         // MARK: - Audio Lifecycle
-        .onChange(of: activeBenefit) {
-            playActiveRecording()
-        }
-
         .onChange(of: scenePhase) {
             if scenePhase != .active {
-                ingredientAudio?.stop()
-                speechSynthesizer.stopSpeaking(at: .immediate)
+                Coach.stopVoice()
             }
         }
 
         .onDisappear {
-            ingredientAudio?.stop()
-            speechSynthesizer.stopSpeaking(at: .immediate)
+            // The ending scene owns playback while it is presented.
+            if !isCelebrating {
+                Coach.stopVoice()
+            }
         }
 
         .navigationBarBackButtonHidden(true)
@@ -263,8 +285,7 @@ struct ToastView: View {
                     ),
 
                     onAnotherMeal: {
-                        ingredientAudio?.stop()
-                        speechSynthesizer.stopSpeaking(at: .immediate)
+                        Coach.stopVoice()
 
                         goToTask = false
                         returnToMealMenuAfterDismiss = true
@@ -272,8 +293,7 @@ struct ToastView: View {
                     },
 
                     onStartTask: {
-                        ingredientAudio?.stop()
-                        speechSynthesizer.stopSpeaking(at: .immediate)
+                        Coach.stopVoice()
                         goToTask = true
                     }
                 )
@@ -311,10 +331,9 @@ struct ToastView: View {
             return
         }
 
-        ingredientAudio?.stop()
-        activeBenefit = nil
+        Coach.stopVoice()
 
-        speechSynthesizer.stopSpeaking(at: .immediate)
+        Coach.stopVoice()
 
     
         // Celebration has no new audio.
@@ -364,74 +383,18 @@ struct ToastView: View {
             selected: selectedFoods
         )
 
-        activeBenefit = added ? benefit : nil
+        guard step != .finished, scenePhase == .active else {
+            Coach.stopVoice()
+            return
+        }
+
+        // Bread removal reactions remain visual only.
+        Coach.play(added ? coachMessage : nil, character: character)
     }
 
     // MARK: - Existing Instructions Audio
     private func playToastAudio() {
-
-        if speechSynthesizer.isSpeaking {
-            speechSynthesizer.stopSpeaking(at: .immediate)
-            return
-        }
-
-        ingredientAudio?.stop()
-
-        let isGirl = character == "girl"
-        let instructions: String
-
-        switch step {
-
-        case .base:
-            instructions = isGirl
-                ? "اختاري الجبن أو الشوكولاتة، ثم اضغطي التالي."
-                : "اختر الجبن أو الشوكولاتة، ثم اضغط التالي."
-
-        case .protein:
-            instructions = isGirl
-                ? "اختاري البروتين الذي تحبينه، ثم اضغطي التالي."
-                : "اختر البروتين الذي تحبه، ثم اضغط التالي."
-
-        case .toppings:
-            instructions = isGirl
-                ? "اختاري الإضافات التي تحبينها، ثم اضغطي انتهيت."
-                : "اختر الإضافات التي تحبها، ثم اضغط انتهيت."
-
-        case .finished:
-            return
-        }
-
-        let utterance = AVSpeechUtterance(
-            string: instructions
-        )
-
-        utterance.voice = AVSpeechSynthesisVoice(
-            language: "ar-SA"
-        )
-
-        utterance.rate = 0.45
-        speechSynthesizer.speak(utterance)
-    }
-
-    // MARK: - Ingredient Recordings
-    private func playActiveRecording() {
-
-        guard
-            let activeBenefit,
-            step != .finished,
-            scenePhase == .active
-        else {
-            ingredientAudio?.stop()
-            return
-        }
-
-        if ingredientAudio == nil {
-            ingredientAudio = IngredientAudio()
-        }
-
-        ingredientAudio?.play(
-            recording: activeBenefit.recordingName
-        )
+        IngredientVoice.shared.replayLast()
     }
 
     // MARK: - Animation
@@ -450,7 +413,10 @@ struct ToastView: View {
 
         withAnimation(popupAnimation) {
 
-            selectedBase = selectedBase == base ? nil : base
+            // I keep the spread selected so tapping it again reopens its steps.
+            selectedBase = base
+            // I keep my previous code here for reference.
+            // selectedBase = selectedBase == base ? nil : base
 
             if selectedBase == .chocolate {
 
@@ -500,20 +466,23 @@ struct ToastView: View {
     // MARK: - Next Step
     private func advance() {
 
-        // Prevent moving forward without selecting an ingredient.
-        switch step {
+        // I require a spread, but let the child continue without protein.
+        guard selectedBase != nil else { return }
+        // I keep my previous code here for reference.
+        // // Prevent moving forward without selecting an ingredient.
+        // switch step {
+        // 
+        // case .base where selectedBase == nil:
+        //     return
+        // 
+        // case .protein where selectedProtein == nil:
+        //     return
+        // 
+        // default:
+        //     break
+        // }
 
-        case .base where selectedBase == nil:
-            return
-
-        case .protein where selectedProtein == nil:
-            return
-
-        default:
-            break
-        }
-
-        ingredientAudio?.stop()
+        Coach.stopVoice()
 
         withAnimation(popupAnimation) {
 
@@ -536,10 +505,8 @@ struct ToastView: View {
     // MARK: - Back Navigation
     private func goBack() {
 
-        ingredientAudio?.stop()
-        speechSynthesizer.stopSpeaking(at: .immediate)
+        Coach.stopVoice()
 
-        activeBenefit = nil
         coachMessage = nil
 
         switch step {
@@ -547,35 +514,76 @@ struct ToastView: View {
        
         case .protein:
             withAnimation(popupAnimation) {
-                selectedBase = nil
+                // keep cheese, but clear protein and the later toppings.
                 selectedProtein = nil
-                selectedFruits.removeAll()
                 selectedVegetables.removeAll()
+                selectedFruits.removeAll()
                 step = .base
             }
 
         case .toppings:
             withAnimation(popupAnimation) {
-                selectedFruits.removeAll()
+                // clear the toppings I am leaving and keep my earlier choices.
                 selectedVegetables.removeAll()
-
-                if selectedBase == .chocolate {
-                    selectedBase = nil
-                    selectedProtein = nil
-                    step = .base
-                } else {
-                    selectedProtein = nil
-                    step = .protein
-                }
+                selectedFruits.removeAll()
+                step = selectedBase == .chocolate ? .base : .protein
             }
+        // previous Back behavior here for reference.
+        // // I move back one step without clearing the child's ingredients.
+        // case .protein:
+        //     withAnimation(popupAnimation) {
+        //         step = .base
+        //     }
+        // 
+        // case .toppings:
+        //     withAnimation(popupAnimation) {
+        //         step = selectedBase == .chocolate ? .base : .protein
+        //     }
+        // I keep my previous code here for reference.
+        // case .protein:
+        //     withAnimation(popupAnimation) {
+        //         selectedBase = nil
+        //         selectedProtein = nil
+        //         selectedFruits.removeAll()
+        //         selectedVegetables.removeAll()
+        //         step = .base
+        //     }
+        // 
+        // case .toppings:
+        //     withAnimation(popupAnimation) {
+        //         selectedFruits.removeAll()
+        //         selectedVegetables.removeAll()
+        // 
+        //         if selectedBase == .chocolate {
+        //             selectedBase = nil
+        //             selectedProtein = nil
+        //             step = .base
+        //         } else {
+        //             selectedProtein = nil
+        //             step = .protein
+        //         }
+        //     }
 
 
         case .base:
+            // I clear the whole recipe before returning to food selection.
+            selectedBase = nil
+            selectedProtein = nil
+            selectedVegetables.removeAll()
+            selectedFruits.removeAll()
+
             if let returnToFoodSelection {
                 returnToFoodSelection()
             } else {
                 dismiss()
             }
+        // I keep my previous Back behavior here for reference.
+        // case .base:
+        //     if let returnToFoodSelection {
+        //         returnToFoodSelection()
+        //     } else {
+        //         dismiss()
+        //     }
 
         case .finished:
             break

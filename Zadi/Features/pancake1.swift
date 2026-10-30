@@ -1,6 +1,5 @@
 
 import SwiftUI
-import AVFoundation
 // MARK: - Toppings
 
 enum PancakeTopping: String, CaseIterable, Identifiable {
@@ -51,7 +50,6 @@ struct PancakePlateView: View {
     // MARK: - Audio & Navigation
     @Environment(\.returnToHome) private var returnToHome
 
-    @State private var speechSynthesizer = AVSpeechSynthesizer()
     @State private var goToTask = false
     @State private var isFinishing = false
     @State private var firstPancake = false
@@ -63,6 +61,7 @@ struct PancakePlateView: View {
     // Girl speech message
     @State private var coachMessage: CoachMessage? = nil
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     var body: some View {
 
         GeometryReader { geometry in
@@ -159,86 +158,107 @@ struct PancakePlateView: View {
 
                 // MARK: - Topping Cards
 
-                HStack(spacing: 18 * scale) {
-
+                // Shared cards keep the topping row aligned with Bread, Rice, and Food Selection.
+                FoodCardGroup {
                     ForEach(PancakeTopping.allCases) { topping in
-
-                        Button {
+                        FoodChoiceButton(title: Text(topping.title), image: topping.cardImage,
+                                         selected: selectedToppings.contains(topping)) {
+                            // Use the same appearance as the other shared food cards.
+                            // Previous setting: appearance: .pancake
                             toggleTopping(topping)
-                        } label: {
-
-                            VStack(spacing: 2 * scale) {
-                                Image(topping.cardImage)
-                                    .resizable()
-                                    .scaledToFit()
-                                    
-                                    .frame(
-                                        width: 105 * scale,
-                                        height: 90 * scale
-                                    )
-                                Text(topping.title)
-                                    .font(
-                                        .system(
-                                            size: 21 * scale,
-                                            weight: .bold
-                                        )
-                                    )
-                                    .foregroundStyle(
-                                        Color(
-                                            red: 0.25,
-                                            green: 0.35,
-                                            blue: 0.55
-                                        )
-                                    )
-                            }
-                            .frame(
-                                width: 130 * scale,
-                                height: 145 * scale
-                            )
-                            .background(
-                                Color(
-                                    red: 0.74,
-                                    green: 0.74,
-                                    blue: 0.77
-                                )
-                                .opacity(0.92)
-                            )                            .clipShape(
-                                RoundedRectangle(
-                                    cornerRadius: 25 * scale
-                                )
-                            )
-                            .overlay {
-                                RoundedRectangle(
-                                    cornerRadius: 25 * scale
-                                )
-                                .stroke(
-                                    selectedToppings.contains(topping)
-                                        ? Color.green
-                                        : Color.clear,
-                                    lineWidth: 4 * scale
-                                )
-                            }
-                            .shadow(
-                                color: .black.opacity(0.12),
-                                radius: 5
-                            )
                         }
-                        .buttonStyle(.plain)
                     }
                 }
+                .environment(\.foodLayoutStyle, FoodLayoutStyle.responsive(to: geometry.size))
                 .environment(\.layoutDirection, .leftToRight)
-                .position(
-                    x: w * 0.50,
-                    y: h * 0.75
-                )
+                .frame(width: FoodLayoutStyle.workspaceWidth(for: geometry.size))
+                .position(x: FoodLayoutStyle.fourCardCenterX(for: geometry.size),
+                          y: h * FoodLayoutStyle.rowCenterFraction)
+                // Previous row placement:
+                // .position(x: w * 0.5, y: h * FoodLayoutStyle.rowCenterFraction)
                 .opacity(isCelebrating ? 0 : 1)
                 .allowsHitTesting(!isCelebrating)
 
+                // Previous topping-card implementation is preserved below.
+                //                 HStack(spacing: 18 * scale) {
+                //
+                //                     ForEach(PancakeTopping.allCases) { topping in
+                //
+                //                         Button {
+                //                             toggleTopping(topping)
+                //                         } label: {
+                //
+                //                             VStack(spacing: 2 * scale) {
+                //                                 Image(topping.cardImage)
+                //                                     .resizable()
+                //                                     .scaledToFit()
+                //
+                //                                     .frame(
+                //                                         width: 105 * scale,
+                //                                         height: 90 * scale
+                //                                     )
+                //                                 Text(topping.title)
+                //                                     .font(
+                //                                         .system(
+                //                                             size: 21 * scale,
+                //                                             weight: .bold
+                //                                         )
+                //                                     )
+                //                                     .foregroundStyle(
+                //                                         Color(
+                //                                             red: 0.25,
+                //                                             green: 0.35,
+                //                                             blue: 0.55
+                //                                         )
+                //                                     )
+                //                             }
+                //                             .frame(
+                //                                 width: 130 * scale,
+                //                                 height: 145 * scale
+                //                             )
+                //                             .background(
+                //                                 Color(
+                //                                     red: 0.74,
+                //                                     green: 0.74,
+                //                                     blue: 0.77
+                //                                 )
+                //                                 .opacity(0.92)
+                //                             )                            .clipShape(
+                //                                 RoundedRectangle(
+                //                                     cornerRadius: 25 * scale
+                //                                 )
+                //                             )
+                //                             .overlay {
+                //                                 RoundedRectangle(
+                //                                     cornerRadius: 25 * scale
+                //                                 )
+                //                                 .stroke(
+                //                                     selectedToppings.contains(topping)
+                //                                         ? Color.green
+                //                                         : Color.clear,
+                //                                     lineWidth: 4 * scale
+                //                                 )
+                //                             }
+                //                             .shadow(
+                //                                 color: .black.opacity(0.12),
+                //                                 radius: 5
+                //                             )
+                //                         }
+                //                         .buttonStyle(.plain)
+                //                     }
+                //                 }
+                //                 .environment(\.layoutDirection, .leftToRight)
+                //                 .position(
+                //                     x: w * 0.50,
+                //                     y: h * 0.75
+                //                 )
+                //                 .opacity(isCelebrating ? 0 : 1)
+                //                 .allowsHitTesting(!isCelebrating)
+                //
                 // MARK: - Shared Back & Sound Buttons
                 ZadiTopControls(
                         onBack: {
-                            speechSynthesizer.stopSpeaking(at: .immediate)
-                            Speaker.shared.stop()
+                            Coach.stopVoice()
 
                             if let returnToFoodSelection {
                                 returnToFoodSelection()
@@ -253,41 +273,36 @@ struct PancakePlateView: View {
 
                 // MARK: - Girl and Bubble
 
-                CharacterView(
-                    character: character,
-                    message: coachMessage
-                )
-               .scaleEffect(scale)
-               .position(
-                   x: w * 0.14,
-                   y: h * 0.87
-               )
-               .opacity(isCelebrating ? 0 : 1)
-               .allowsHitTesting(!isCelebrating)
+                // Share Bread's measured character size and lowered baseline.
+                CharacterPresentation(character: character, message: coachMessage,
+                                      foodLayoutStyle: .foodPages)
+                    // Previous presentation:
+                    // CharacterPresentation(character: character, message: coachMessage)
+                    .opacity(isCelebrating ? 0 : 1)
 
-
-          
                     // MARK: - Finish Button
 
-                    if !selectedToppings.isEmpty && !isCelebrating {
-
-                        ZadiActionButton(
-                            title: "خلصت وجبتي",
-                            icon: "checkmark.circle.fill"
-                        ) {
-                            Speaker.shared.stop()
-
-                            withAnimation(.spring(response: 0.5)) {
-                                isCelebrating = true
-                            }
-                        }
-                        .scaleEffect(scale)
-                        .position(
-                            x: w * 0.80,
-                            y: h * 0.93
-                        )
-                    }
-
+                    // Finish now uses the shared action region outside the artwork layout.
+                    // Previous implementation:
+                //                     if !selectedToppings.isEmpty && !isCelebrating {
+                //
+                //                         ZadiActionButton(
+                //                             title: "خلصت وجبتي",
+                //                             icon: "checkmark.circle.fill"
+                //                         ) {
+                //                             Coach.stopVoice()
+                //
+                //                             withAnimation(.spring(response: 0.5)) {
+                //                                 isCelebrating = true
+                //                             }
+                //                         }
+                //                         .scaleEffect(scale)
+                //                         .position(
+                //                             x: w * 0.80,
+                //                             y: h * 0.93
+                //                         )
+                //                     }
+                //
                     
 
 
@@ -301,6 +316,19 @@ struct PancakePlateView: View {
             }
         }
         .ignoresSafeArea()
+        .overlay {
+            // Finish stays independent of the cards and retains the original completion rule.
+            FoodActionRegion {
+                if !selectedToppings.isEmpty && !isCelebrating {
+                    ZadiActionButton(title: "خلصت وجبتي", icon: "checkmark.circle.fill") {
+                        Coach.stopVoice()
+                        withAnimation(.spring(response: 0.5)) {
+                            isCelebrating = true
+                        }
+                    }
+                }
+            }
+        }
         
        
         // MARK: - Shared Ending Scene
@@ -363,8 +391,7 @@ struct PancakePlateView: View {
                     ),
 
                     onAnotherMeal: {
-                        speechSynthesizer.stopSpeaking(at: .immediate)
-                        Speaker.shared.stop()
+                        Coach.stopVoice()
 
                         goToTask = false
                         returnToMealMenuAfterDismiss = true
@@ -372,8 +399,7 @@ struct PancakePlateView: View {
                     },
 
                     onStartTask: {
-                        speechSynthesizer.stopSpeaking(at: .immediate)
-                        Speaker.shared.stop()
+                        Coach.stopVoice()
                         goToTask = true
                     }
                 )
@@ -392,32 +418,23 @@ struct PancakePlateView: View {
             }
         }
 
+        .onChange(of: scenePhase) {
+            if scenePhase != .active {
+                Coach.stopVoice()
+            }
+        }
         .onDisappear {
-            speechSynthesizer.stopSpeaking(at: .immediate)
+            // The ending scene owns playback while it is presented.
+            if !isCelebrating {
+                Coach.stopVoice()
+            }
         }
 
     }
 
     // MARK: - Play Pancake Audio
     private func playPancakeAudio() {
-
-        if speechSynthesizer.isSpeaking {
-            speechSynthesizer.stopSpeaking(at: .immediate)
-            return
-        }
-
-       
-        let instructions = isGirl
-            ? "هيا نزيّن البانكيك! اختاري الإضافات التي تحبينها، وعندما تنتهين اضغطي زر انتهيت."
-            : "هيا نزيّن البانكيك! اختر الإضافات التي تحبها، وعندما تنتهي اضغط زر انتهيت."
-
-        let message = AVSpeechUtterance(string: instructions)
-
-
-        message.voice = AVSpeechSynthesisVoice(language: "ar-SA")
-        message.rate = 0.45
-
-        speechSynthesizer.speak(message)
+        IngredientVoice.shared.replayLast()
     }
 
     // MARK: - Pancake Animation
@@ -440,6 +457,7 @@ struct PancakePlateView: View {
     // MARK: - Selection Logic
 
     private func toggleTopping(_ topping: PancakeTopping) {
+        guard scenePhase == .active, !isCelebrating else { return }
 
         let sauceConflict =
             (topping == .chocolate &&
@@ -475,8 +493,8 @@ struct PancakePlateView: View {
             
             // Play the new encouragement audio
             if let coachMessage {
-                speechSynthesizer.stopSpeaking(at: .immediate)
-                Speaker.shared.say(coachMessage.voice)
+                Coach.stopVoice()
+                Coach.play(coachMessage, character: character)
             }
         }
     

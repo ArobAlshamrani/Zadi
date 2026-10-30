@@ -1,12 +1,11 @@
 
 import SwiftUI
-import AVFoundation
 
 struct HomeView: View {
     @State private var showCharacterSelection = false
 
     // MARK: - Audio
-    @State private var narrator = AVSpeechSynthesizer()
+    @Environment(\.scenePhase) private var scenePhase
     
     
     @State private var selectedCharacter: String? = nil
@@ -116,7 +115,7 @@ struct HomeView: View {
                             )
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("استمع إلى الترحيب")
+                    .accessibilityLabel("إعادة تشغيل آخر تسجيل")
                     .position(
                         x: width * 0.93,
                         y: height * 0.10
@@ -161,21 +160,21 @@ struct HomeView: View {
             }
             .ignoresSafeArea()
             .toolbar(.hidden, for: .navigationBar)
+            // Attach playback to the Home content, which disappears when another page opens.
+            .onAppear { playWelcomeVoice() }
+            .onDisappear { Coach.stopVoice() }
+            .onChange(of: scenePhase) {
+                if scenePhase != .active { Coach.stopVoice() }
+            }
         }
     }
 
     // MARK: - Welcome Audio
     private func playWelcomeVoice() {
-        if narrator.isSpeaking {
-            narrator.stopSpeaking(at: .immediate)
-        } else {
-            let message = AVSpeechUtterance(
-                string: "أهلًا يا أبطال! هيا نُحضّر وجبة لذيذة معًا!"
-            )
-            message.voice = AVSpeechSynthesisVoice(language: "ar-SA")
-            message.rate = 0.48
-            narrator.speak(message)
-        }
+        // The welcome filename is shared, so this character value does not change its voice.
+        IngredientVoice.shared.play(.homeWelcome, character: .girl)
+        // Previous speaker behavior:
+        // IngredientVoice.shared.replayLast()
     }
 }
 

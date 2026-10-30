@@ -1,6 +1,5 @@
 
 import SwiftUI
-import AVFoundation
 // MARK: - Meal Options
 enum MealOption: String, Hashable {
     case pancake, bread, rice, cereal, pasta
@@ -32,7 +31,6 @@ struct MealSelectionView: View {
     let character: String
     
     // MARK: - Audio
-    @State private var narrator = AVSpeechSynthesizer()
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.returnToHome) private var returnToHome
@@ -74,17 +72,7 @@ struct MealSelectionView: View {
                     .clipped()
 
                 // MARK: - Character
-                Image(characterImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(
-                        width: width * 0.22,
-                        height: height * 0.38
-                    )
-                    .position(
-                        x: width * 0.12,
-                        y: height * 0.84
-                    )
+                CharacterPresentation(character: character, imageName: characterImage)
 
                 // MARK: - Instruction
                 Text(instruction)
@@ -139,7 +127,7 @@ struct MealSelectionView: View {
             
                 // MARK: - Back Button
                 Button {
-                    narrator.stopSpeaking(at: .immediate)
+                    Coach.stopVoice()
                     dismiss()
                 } label: {
                     Image(systemName: "arrow.left")
@@ -189,7 +177,7 @@ struct MealSelectionView: View {
                         )
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("استمع إلى التعليمات")
+                .accessibilityLabel("إعادة تشغيل آخر تسجيل")
                 .position(
                     x: width * 0.93,
                     y: height * 0.10
@@ -203,7 +191,7 @@ struct MealSelectionView: View {
         .ignoresSafeArea()
         .navigationBarBackButtonHidden(true)
         .onDisappear {
-            narrator.stopSpeaking(at: .immediate)
+            Coach.stopVoice()
         }
         .toolbar(.hidden, for: .navigationBar)
         .navigationDestination(isPresented: $showDestination) {
@@ -215,22 +203,7 @@ struct MealSelectionView: View {
     
     // MARK: - Meal Selection Audio
     private func playMealAudio() {
-
-        if narrator.isSpeaking {
-            narrator.stopSpeaking(at: .immediate)
-        } else {
-            let message = AVSpeechUtterance(
-                string: instruction
-            )
-
-            message.voice =
-                AVSpeechSynthesisVoice(language: "ar-SA")
-                ?? AVSpeechSynthesisVoice(language: "ar")
-
-            message.rate = 0.45
-
-            narrator.speak(message)
-        }
+        IngredientVoice.shared.replayLast()
     }
 
 

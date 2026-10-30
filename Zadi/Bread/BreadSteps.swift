@@ -8,7 +8,8 @@ struct IngredientChoiceRow<Ingredient: BreadIngredient>: View {
     let choose: (Ingredient) -> Void
 
     var body: some View {
-        HStack(spacing: 18) {
+        // I let the shared group arrange my cards without owning their selections.
+        FoodCardGroup {
             ForEach(ingredients) { food in
                 FoodChoiceButton(title: Text(food.title), image: food.icon,
                                  selected: isSelected(food)) {
@@ -16,7 +17,22 @@ struct IngredientChoiceRow<Ingredient: BreadIngredient>: View {
                 }
             }
         }
-        .scaleEffect(0.98)    }
+    }
+    // previous ingredient row here for reference.
+    //     var body: some View {
+    //         HStack(spacing: 18) {
+    //             ForEach(ingredients) { food in
+    //                 FoodChoiceButton(title: Text(food.title), image: food.icon,
+    //                                  selected: isSelected(food), cardHeight: 145) {
+    //                     // I use Pancake's taller card size while keeping my Bread selection style.
+    //                     // Previously: selected: isSelected(food)) {
+    //                     choose(food)
+    //                 }
+    //             }
+    //         }
+    //         // I let the page apply its iPad scale instead of shrinking my cards here.
+    //         // .scaleEffect(0.98)
+    //     }
 }
 
 // Spread and protein steps share their layout; ToastView owns their selections.
@@ -31,7 +47,9 @@ struct IngredientSelectionPage<Ingredient: BreadIngredient>: View {
             IngredientChoiceRow(ingredients: ingredients,
                                 isSelected: { selected == $0 }, choose: choose)
            
-            BreadActionButton(title: "التالي", action: next)
+            // Use the shared button directly; the preview keeps the same action and appearance.
+            ZadiActionButton(title: "التالي", action: next)
+            // Previous call: BreadActionButton(title: "التالي", action: next)
                 .disabled(selected == nil)
                 .opacity(selected == nil ? 0.5 : 1)
 
@@ -93,15 +111,18 @@ struct ToppingsSelectionPage: View {
             }
 
             
-            ZadiActionButton(
-                title: "إنهاء الوجبة",
-                icon: "checkmark.circle.fill",
-                action: finish
-            )
-            .disabled(!canFinish)
-            .opacity(canFinish ? 1 : 0.5)
-            .scaleEffect(0.94)
-            .offset(x: -350, y: 45)        }
+            // I let ToastView show Finish in FoodActionRegion.
+            // I keep only ingredient controls here so the row never jumps.
+            // ZadiActionButton(
+            // title: "إنهاء الوجبة",
+            // icon: "checkmark.circle.fill",
+            // action: finish
+            // )
+            // .disabled(!canFinish)
+            // .opacity(canFinish ? 1 : 0.5)
+            // .scaleEffect(0.94)
+            // .offset(x: -350, y: 45)
+        }
     }
 }
 
@@ -125,7 +146,7 @@ struct ToppingsSelectionPage: View {
 }
 
 // MARK: - Finished Recipe
-struct FinishedPage: View {
+/*struct FinishedPage: View {
     let restart: () -> Void
 
     // MARK: - UI
@@ -159,4 +180,19 @@ struct FinishedPage: View {
 #Preview("4 — Finished meal") {
     FinishedPage(restart: {})
         .environment(\.layoutDirection, .rightToLeft)
-}
+}*/
+
+// MARK: - Removed Bread Action Wrapper (Reference Only)
+// The previews now use ZadiActionButton directly.
+// struct BreadActionButton: View {
+// 
+//     let title: LocalizedStringKey
+//     let action: () -> Void
+// 
+//     var body: some View {
+//         ZadiActionButton(
+//             title: title,
+//             action: action
+//         )
+//     }
+// }

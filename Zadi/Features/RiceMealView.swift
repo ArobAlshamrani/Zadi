@@ -12,6 +12,7 @@ struct RiceMealView: View {
     var returnToFoodSelection: (() -> Void)? = nil
     
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.returnToHome) private var returnToHome
     
     @State private var goToTask = false
@@ -32,21 +33,24 @@ struct RiceMealView: View {
             id: "chicken",
             arabicName: "دجاج",
             icon: "riceChickenIngredient",
-            voice: "الدجاج مليء بالبروتين، يجعل عضلاتك قوية!"
+            voice: "الدجاج مليء بالبروتين، يجعل عضلاتك قوية!",
+            recording: .riceChicken
         ),
         
         Food(
             id: "yogurt",
             arabicName: "زبادي",
             icon: "yogurt",
-            voice: "الزبادي مفيد لعظامك وأسنانك!"
+            voice: "الزبادي مفيد لعظامك وأسنانك!",
+            recording: .riceYogurt
         ),
         
         Food(
             id: "salad",
             arabicName: "سلطة",
             icon: "salad",
-            voice: "السلطة مليئة بالفيتامينات، تجعلك نشيطا وصحيا!"
+            voice: "السلطة مليئة بالفيتامينات، تجعلك نشيطا وصحيا!",
+            recording: .riceSalad
         ),
         
         Food(
@@ -54,7 +58,8 @@ struct RiceMealView: View {
             arabicName: "بطاطس",
             icon: "potato",
             isHealthy: false,
-            voice: "البطاطس المقلية لذيذة، لكن فيها زيت كثير. ما رأيك أن تجرب السلطة بدلا منها؟"
+            voice: "البطاطس المقلية لذيذة، لكن فيها زيت كثير. ما رأيك أن تجرب السلطة بدلا منها؟",
+            recording: .riceFries
         )
     ]
     
@@ -96,6 +101,7 @@ struct RiceMealView: View {
     // MARK: - Selection Logic
     
     func toggle(_ food: Food) {
+        guard scenePhase == .active, !isCelebrating else { return }
         
         let added = !selected.contains(food.id)
         
@@ -118,25 +124,23 @@ struct RiceMealView: View {
             selected: onPlate
         )
         
-        // Keep the existing ingredient audio
-        Speaker.shared.say(message?.voice ?? "")
+        Coach.play(message, character: character)
     }
     
     // MARK: - Rice Instructions Audio
     
     private func playRiceAudio() {
-        
-        let instructions = character == "girl"
-        ? "اختاري مع الرز الإضافة التي تحبينها. يمكنك اختيار الدجاج أو الزبادي أو السلطة أو البطاطس."
-        : "اختر مع الرز الإضافة التي تحبها. يمكنك اختيار الدجاج أو الزبادي أو السلطة أو البطاطس."
-        
-        Speaker.shared.say(instructions)
+        IngredientVoice.shared.replayLast()
     }
     
     // MARK: - Main Screen
     
     var body: some View {
         
+        GeometryReader { geometry in
+            let canvas = CGSize(width: 1366, height: 1100)
+            let scale = min(geometry.size.width / canvas.width, geometry.size.height / canvas.height)
+
         ZStack {
             
             // MARK: - Shared Back & Sound Buttons
@@ -160,59 +164,50 @@ struct RiceMealView: View {
             
             // MARK: - Food Selection Cards
             
-            HStack(spacing: 44) {
-                
-                ForEach(foods, id: \.self) { food in
-                    foodButton(food)
-                }
-            }
-            .environment(
-                \.layoutDirection,
-                 .leftToRight
-            )
-            .position(x: 695, y: 853)
-            .opacity(isCelebrating ? 0 : 1)
-            .allowsHitTesting(!isCelebrating)
-            
-            // MARK: - Character & Speech Bubble
-            
-            CharacterView(
-                character: character,
-                message: message
-            )
-            .scaleEffect(1.20)
-            .position(x: 90, y: 930)
-            .opacity(isCelebrating ? 0 : 1)
-            .allowsHitTesting(!isCelebrating)
-            
-            // MARK: - Finish Button
-            
-            // Appears only after the first ingredient
-            
-            if !selected.isEmpty && !isCelebrating {
-                
-                ZadiActionButton(
-                    title: "خلصت وجبتي!",
-                    icon: "checkmark.circle.fill"
-                ) {
-                    
-                    Speaker.shared.stop()
-                    
-                    withAnimation(
-                        .spring(
-                            response: 0.5,
-                            dampingFraction: 0.75
-                        )
-                    ) {
-                        isCelebrating = true
-                    }
-                }
-                
-                .scaleEffect(1.25)
-                .position(x: 1150, y: 1025)
-                .zIndex(20)
-            }
-            
+            // now place cards and Finish outside the scaled artwork canvas.
+            // previous controls here for reference.
+            //             HStack(spacing: 44) {
+            //
+            //                 ForEach(foods, id: \.self) { food in
+            //                     foodButton(food)
+            //                 }
+            //             }
+            //             .environment(
+            //                 \.layoutDirection,
+            //                  .leftToRight
+            //             )
+            //             .position(x: 695, y: 853)
+            //             .opacity(isCelebrating ? 0 : 1)
+            //             .allowsHitTesting(!isCelebrating)
+            //
+            //             // MARK: - Finish Button
+            //
+            //             // Appears only after the first ingredient
+            //
+            //             if !selected.isEmpty && !isCelebrating {
+            //
+            //                 ZadiActionButton(
+            //                     title: "خلصت وجبتي!",
+            //                     icon: "checkmark.circle.fill"
+            //                 ) {
+            //
+            //                     Coach.stopVoice()
+            //
+            //                     withAnimation(
+            //                         .spring(
+            //                             response: 0.5,
+            //                             dampingFraction: 0.75
+            //                         )
+            //                     ) {
+            //                         isCelebrating = true
+            //                     }
+            //                 }
+            //
+            //                 .scaleEffect(1.25)
+            //                 .position(x: 1150, y: 1025)
+            //                 .zIndex(20)
+            //             }
+            //            
             
             
             
@@ -221,10 +216,7 @@ struct RiceMealView: View {
         
         // MARK: - Screen Layout
         
-        .frame(
-            maxWidth: .infinity,
-            maxHeight: .infinity
-        )
+        .frame(width: canvas.width, height: canvas.height)
         
         .background {
             Image("KitchenBackGround")
@@ -233,7 +225,9 @@ struct RiceMealView: View {
         }
         
         .ignoresSafeArea()
-        .statusBarHidden()
+        // use the same status-bar visibility as Bread so our safe-area actions line up.
+        .statusBarHidden(false)
+        // .statusBarHidden()
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
       
@@ -264,14 +258,14 @@ struct RiceMealView: View {
                     mealImage: mealImages[selected] ?? "Rice_only",
 
                     onAnotherMeal: {
-                        Speaker.shared.stop()
+                        Coach.stopVoice()
                         goToTask = false
                         returnToMealMenuAfterDismiss = true
                         isCelebrating = false
                     },
 
                     onStartTask: {
-                        Speaker.shared.stop()
+                        Coach.stopVoice()
                         goToTask = true
                     }
                 )
@@ -295,8 +289,60 @@ struct RiceMealView: View {
         
         // MARK: - Stop Audio When Leaving
         
+        .onChange(of: scenePhase) {
+            if scenePhase != .active {
+                Coach.stopVoice()
+            }
+        }
         .onDisappear {
-            Speaker.shared.stop()
+            // The ending scene owns playback while it is presented.
+            if !isCelebrating {
+                Coach.stopVoice()
+            }
+        }
+        .scaleEffect(scale)
+        .frame(width: geometry.size.width, height: geometry.size.height)
+        .overlay {
+            // use the same card sizes and stable row position as Bread and Food Selection.
+            FoodCardGroup {
+                ForEach(foods, id: \.id) { food in
+                    foodButton(food)
+                }
+            }
+            .environment(\.foodLayoutStyle, FoodLayoutStyle.responsive(to: geometry.size))
+            .environment(\.layoutDirection, .leftToRight)
+            .frame(width: FoodLayoutStyle.workspaceWidth(for: geometry.size))
+            .position(x: FoodLayoutStyle.fourCardCenterX(for: geometry.size),
+                      y: geometry.size.height * FoodLayoutStyle.rowCenterFraction)
+            // Previous row placement:
+            // .position(x: geometry.size.width * 0.5,
+            //           y: geometry.size.height * FoodLayoutStyle.rowCenterFraction)
+            .opacity(isCelebrating ? 0 : 1)
+            .allowsHitTesting(!isCelebrating)
+        }
+        .overlay {
+            // Share Bread's measured character size and lowered baseline.
+            CharacterPresentation(character: character, message: message,
+                                  foodLayoutStyle: .foodPages)
+                // Previous presentation:
+                // CharacterPresentation(character: character, message: message)
+                .opacity(isCelebrating ? 0 : 1)
+        }
+        }
+        .ignoresSafeArea()
+        .overlay {
+            // keep Finish separate from cards, so showing it never moves their row.
+            FoodActionRegion {
+                if !selected.isEmpty && !isCelebrating {
+                    ZadiActionButton(title: "خلصت وجبتي!", icon: "checkmark.circle.fill") {
+                        Coach.stopVoice()
+                        // keep original celebration animation and completion rule.
+                        withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
+                            isCelebrating = true
+                        }
+                    }
+                }
+            }
         }
     }
     
@@ -304,76 +350,85 @@ struct RiceMealView: View {
     // MARK: - Food Button
     
     func foodButton(_ food: Food) -> some View {
-        
-        let isSelected = selected.contains(food.id)
-        
-        return Button {
-            
+        // reuse shared card while Rice still owns the selection and recording.
+        FoodChoiceButton(title: Text(food.arabicName), image: food.icon,
+                         selected: selected.contains(food.id)) {
             toggle(food)
-            
-        } label: {
-            
-            VStack(spacing: 2) {
-                
-                Image(food.icon)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(
-                        width: 145,
-                        height: 112
-                    )
-                
-                Text(food.arabicName)
-                    .font(
-                        .system(
-                            size: 28,
-                            weight: .bold,
-                            design: .rounded
-                        )
-                    )
-                    .foregroundStyle(.white)
-                    .shadow(
-                        color: .black.opacity(0.35),
-                        radius: 2,
-                        y: 2
-                    )
-            }
-            .frame(
-                width: 172,
-                height: 190
-            )
-            .background(
-                Color(
-                    red: 0.74,
-                    green: 0.74,
-                    blue: 0.77
-                )
-                .opacity(0.92)
-            )
-            .clipShape(
-                RoundedRectangle(cornerRadius: 34)
-            )
-            .overlay {
-                
-                RoundedRectangle(cornerRadius: 34)
-                    .stroke(
-                        .white,
-                        lineWidth: isSelected ? 5 : 0
-                    )
-            }
-            .shadow(
-                color: .white.opacity(
-                    isSelected ? 0.95 : 0
-                ),
-                radius: 20
-            )
-            .scaleEffect(
-                isSelected ? 1.06 : 1
-            )
         }
-        
-        .buttonStyle(.plain)
     }
+
+    // previous Rice card here for reference.
+            //     func foodButton(_ food: Food) -> some View {
+            //
+            //         let isSelected = selected.contains(food.id)
+            //
+            //         return Button {
+            //
+            //             toggle(food)
+            //
+            //         } label: {
+            //
+            //             VStack(spacing: 2) {
+            //
+            //                 Image(food.icon)
+            //                     .resizable()
+            //                     .scaledToFit()
+            //                     .frame(
+            //                         width: 145,
+            //                         height: 112
+            //                     )
+            //
+            //                 Text(food.arabicName)
+            //                     .font(
+            //                         .system(
+            //                             size: 28,
+            //                             weight: .bold,
+            //                             design: .rounded
+            //                         )
+            //                     )
+            //                     .foregroundStyle(.white)
+            //                     .shadow(
+            //                         color: .black.opacity(0.35),
+            //                         radius: 2,
+            //                         y: 2
+            //                     )
+            //             }
+            //             .frame(
+            //                 width: 172,
+            //                 height: 190
+            //             )
+            //             .background(
+            //                 Color(
+            //                     red: 0.74,
+            //                     green: 0.74,
+            //                     blue: 0.77
+            //                 )
+            //                 .opacity(0.92)
+            //             )
+            //             .clipShape(
+            //                 RoundedRectangle(cornerRadius: 34)
+            //             )
+            //             .overlay {
+            //
+            //                 RoundedRectangle(cornerRadius: 34)
+            //                     .stroke(
+            //                         .white,
+            //                         lineWidth: isSelected ? 5 : 0
+            //                     )
+            //             }
+            //             .shadow(
+            //                 color: .white.opacity(
+            //                     isSelected ? 0.95 : 0
+            //                 ),
+            //                 radius: 20
+            //             )
+            //             .scaleEffect(
+            //                 isSelected ? 1.06 : 1
+            //             )
+            //         }
+            //
+            //         .buttonStyle(.plain)
+            //     }
 
 } // نهاية RiceMealView
 
