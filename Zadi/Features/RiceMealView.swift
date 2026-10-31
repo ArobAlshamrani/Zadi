@@ -89,7 +89,7 @@ struct RiceMealView: View {
             "Rice_chicken_yogurt_salad",
         
         ["chicken", "fries", "salad"]:
-            "Rice_chicken_fries_salad",
+            "Rice_chicken_salad_fries",
         
         ["yogurt", "fries", "salad"]:
             "Rice_yogurt_fries_salad",
@@ -437,3 +437,4 @@ struct RiceMealView: View {
 #Preview(traits: .landscapeLeft) {
     RiceMealView()
 }
+

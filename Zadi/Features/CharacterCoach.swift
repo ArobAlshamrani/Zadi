@@ -64,8 +64,17 @@ enum Coach {
         let healthyCount = selected.filter { $0.isHealthy }.count
         let hasUnhealthy = selected.contains { !$0.isHealthy }
  
-        // 1) Added something unhealthy → think & suggest something better
+        // 1) Added something unhealthy
         if added && !food.isHealthy {
+            // There are already healthy foods on the plate
+            if healthyCount > 0 {
+                    return CoachMessage(mood: .happy,
+                                        text: "البطاطس لذيذة، لكن لا تكثر منها!",
+                                        voice: food.voice,
+                                        recording: food.recording)
+                
+            }
+            // Unhealthy food alone → think & suggest something better
             return CoachMessage(mood: .thinking,
                                 text: "حسنا دعنا نفكر للحظة...",
                                 voice: food.voice,
