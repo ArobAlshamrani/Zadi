@@ -248,7 +248,10 @@ struct FoodSelectionPage: View {
                             dismiss()
                         },
                         onSound: {
-                            IngredientVoice.shared.replayLast()
+                            IngredientVoice.shared.play(
+                                .mission,
+                                character: character == "boy" ? .boy : .girl
+                            )
                         }
                     )
                     .zIndex(100)

@@ -3,6 +3,11 @@ import SwiftUI
 
 struct HomeView: View {
     @State private var showCharacterSelection = false
+    private enum HomeRoute: Hashable {
+        case characters
+    }
+
+    @State private var navigationPath: [HomeRoute] = []
 
     // MARK: - Audio
     @Environment(\.scenePhase) private var scenePhase
@@ -10,8 +15,7 @@ struct HomeView: View {
     
     @State private var selectedCharacter: String? = nil
     var body: some View {
-        NavigationStack {
-            GeometryReader { geometry in
+        NavigationStack(path: $navigationPath) {            GeometryReader { geometry in
 
                 let width = geometry.size.width
                 let height = geometry.size.height
@@ -155,6 +159,9 @@ struct HomeView: View {
                 ) {
                     CharacterSelectionView()
                 }
+                .navigationDestination(for: HomeRoute.self) { _ in
+                    CharacterSelectionView()
+                }
                 .frame(width: width, height: height)
                 .clipped()
             }
@@ -166,6 +173,9 @@ struct HomeView: View {
             .onChange(of: scenePhase) {
                 if scenePhase != .active { Coach.stopVoice() }
             }
+        }
+        .environment(\.returnToHome) {
+            navigationPath = [.characters]
         }
     }
 
