@@ -22,8 +22,8 @@ struct MissionView: View {
     // MARK: - Mission Text
     private var missionText: String {
         isGirl
-        ? "جاهزة نجهّز وجبتنا؟ اختاري أكلة تحبينها!"
-        : "جاهز نجهّز وجبتنا؟ اختر أكلة تحبها!"
+        ? "جاهزة نحضّر وجبتنا؟ اختاري أكلة تحبينها!"
+        : "جاهز نحضّر وجبتنا؟ اختر أكلة تحبها!"
     }
     // MARK: - Body
     var body: some View {
@@ -96,8 +96,8 @@ struct MissionView: View {
 
                         Text(
                             isGirl
-                            ? "جاهزة نجهّز وجبتنا؟"
-                            : "جاهز نجهّز وجبتنا؟"
+                            ? "جاهزة نحضّر وجبتنا؟"
+                            : "جاهز نحضّر وجبتنا؟"
                         )
                         .font(.system(
                             size: height * 0.044,
