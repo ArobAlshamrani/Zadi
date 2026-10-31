@@ -5,6 +5,7 @@ struct MissionView: View {
 
     // MARK: - Properties
     let character: String
+    @AppStorage("chosenCharacter") private var chosenCharacter = "girl"
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
@@ -256,7 +257,15 @@ struct MissionView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         // Play the selected character's mission recording whenever this page opens.
-        .onAppear { playMissionAudio() }
+        .onAppear {
+            chosenCharacter = character
+        }
+        .task {
+                    // wait until the previous screens have fully closed (they stop all voices when they close)
+                    try? await Task.sleep(for: .seconds(0.8))
+                    playMissionAudio()
+                }
+        
         .onDisappear {
             Coach.stopVoice()
         }

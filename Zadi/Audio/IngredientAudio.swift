@@ -64,6 +64,12 @@ final class IngredientVoice {
         case interactionSaltFat = "interaction_salt_fat"
         case interactionSugar = "interaction_sugar"
         case interactionVegetable = "interaction_vegetable"
+        
+       // Task (end mission)
+                case taskBreakfast = "task_breakfast"
+                case taskBread = "task_bread"
+                case taskRice = "task_rice"
+                case taskPasta = "task_pasta"
 
         func filename(for character: Character) -> String {
             // Home has one shared recording; all other recordings use the chosen character.

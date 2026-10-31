@@ -5,7 +5,10 @@ struct HomeView: View {
     @State private var showCharacterSelection = false
     private enum HomeRoute: Hashable {
         case characters
-    }
+        case mission(String)
+            }
+
+            @AppStorage("chosenCharacter") private var chosenCharacter = "girl"
 
     @State private var navigationPath: [HomeRoute] = []
 
@@ -159,8 +162,13 @@ struct HomeView: View {
                 ) {
                     CharacterSelectionView()
                 }
-                .navigationDestination(for: HomeRoute.self) { _ in
-                    CharacterSelectionView()
+                .navigationDestination(for: HomeRoute.self) { route in
+                    switch route {
+                                       case .characters:
+                                           CharacterSelectionView()
+                                       case .mission(let character):
+                                           MissionView(character: character)
+                                       }
                 }
                 .frame(width: width, height: height)
                 .clipped()
@@ -175,7 +183,7 @@ struct HomeView: View {
             }
         }
         .environment(\.returnToHome) {
-            navigationPath = [.characters]
+            navigationPath = [.characters, .mission(chosenCharacter)]
         }
     }
 
