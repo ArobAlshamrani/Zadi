@@ -39,7 +39,7 @@ struct ZadiTopControls: View {
 
                 // MARK: - Listen Button
                 ZadiCircleButton(
-                    icon: "speaker.wave.2.fill",
+                    icon: "arrow.clockwise",
                     label: "إعادة تشغيل آخر تسجيل",
                     size: buttonSize,
                     action: onSound

@@ -466,9 +466,17 @@ struct PancakePlateView: View {
             (topping == .honey &&
              selectedToppings.contains(.chocolate))
             
-            if sauceConflict {
-                
-                coachMessage = Coach.pancakeSauceConflict()
+        if sauceConflict {
+            coachMessage = Coach.pancakeSauceConflict()
+
+            Coach.stopVoice()
+
+            IngredientVoice.shared.play(
+                .pancakeSauce,
+                character: character == "girl" ? .girl : .boy
+            )
+
+
                 
             } else if selectedToppings.contains(topping) {
                 
@@ -492,10 +500,10 @@ struct PancakePlateView: View {
             }
             
             // Play the new encouragement audio
-            if let coachMessage {
-                Coach.stopVoice()
-                Coach.play(coachMessage, character: character)
-            }
+           if !sauceConflict, let coachMessage {
+            Coach.stopVoice()
+            Coach.play(coachMessage, character: character)
+        }
         }
     
     // MARK: - Girl Messages

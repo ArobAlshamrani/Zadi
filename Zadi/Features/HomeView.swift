@@ -2,7 +2,7 @@
 import SwiftUI
 
 struct HomeView: View {
-    @State private var showCharacterSelection = false
+    @State private var resetNavigation = false
     private enum HomeRoute: Hashable {
         case characters
         case mission(String)
@@ -130,9 +130,7 @@ struct HomeView: View {
                     .zIndex(10)
 
                 
-                    NavigationLink {
-                        CharacterSelectionView()
-                    } label: {
+                    NavigationLink(value: HomeRoute.characters) {
                         Text("ابدأ المغامرة")
                             .font(.system(
                                 size: height * 0.045,
@@ -157,11 +155,7 @@ struct HomeView: View {
 
 
                 }
-                .navigationDestination(
-                    isPresented: $showCharacterSelection
-                ) {
-                    CharacterSelectionView()
-                }
+            
                 .navigationDestination(for: HomeRoute.self) { route in
                     switch route {
                                        case .characters:
@@ -182,8 +176,10 @@ struct HomeView: View {
                 if scenePhase != .active { Coach.stopVoice() }
             }
         }
+        .id(resetNavigation)
         .environment(\.returnToHome) {
             navigationPath = [.characters, .mission(chosenCharacter)]
+            resetNavigation.toggle()
         }
     }
 

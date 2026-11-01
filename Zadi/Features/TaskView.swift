@@ -9,6 +9,7 @@ struct TaskView: View {
     let character: String
     let meal: MealOption
     let onReturnHome: () -> Void
+    @Environment(\.returnToHome) private var returnToHome
     
     // MARK: - Audio
     
@@ -175,11 +176,8 @@ struct TaskView: View {
                         // MARK: - Return to Main Page
                         
                         Button {
-                            
                             IngredientVoice.shared.stop()
-                            
-                            onReturnHome()
-                            
+                            returnToHome()
                         } label: {
                             
                             Label(
