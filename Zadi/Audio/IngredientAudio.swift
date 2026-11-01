@@ -36,6 +36,7 @@ final class IngredientVoice {
         case pancakeHoney = "pancake_honey"
         case pancakePlain = "pancake_plain"
         case pancakeStrawberry = "pancake_strawberry"
+        case pancakeSauce = "pancake_sauce"
 
         // MARK: - Rice
         case riceChicken = "rice_chicken"

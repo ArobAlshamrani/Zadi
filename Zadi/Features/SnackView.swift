@@ -244,7 +244,7 @@ struct SnackView: View {
         }
         .environment(\.foodLayoutStyle, FoodLayoutStyle.responsive(to: size))
         .frame(width: FoodLayoutStyle.workspaceWidth(for: size))
-        .position(x: size.width * 0.5, y: size.height * FoodLayoutStyle.rowCenterFraction)
+        .position(x: size.width * 0.5, y: size.height * 0.77)
         .transition(.opacity)
     }
 

@@ -6,6 +6,7 @@ struct CharacterSelectionView: View {
     // MARK: - States
     @State private var selectedCharacter: String?
     @State private var animateStar = false
+    @AppStorage("chosenCharacter") private var chosenCharacter = "girl"
 
     var body: some View {
         GeometryReader { geometry in
@@ -86,6 +87,7 @@ struct CharacterSelectionView: View {
                     // Girl Card
                     Button {
                         selectedCharacter = "girl"
+                        chosenCharacter = "girl"
                     } label: {
                         characterCard(
                             image: "CharacterGirl",
@@ -105,6 +107,7 @@ struct CharacterSelectionView: View {
                     // Boy Card
                     Button {
                         selectedCharacter = "boy"
+                        chosenCharacter = "boy"
                     } label: {
                         characterCard(
                             image: "CharacterBoy",
